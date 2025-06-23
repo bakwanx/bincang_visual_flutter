@@ -49,7 +49,6 @@ class _UsernameInputPageUIState extends State<UsernameInputPageUI> {
       body: BlocListener<RemoteCubit, RemoteState>(
         listener: (context, state) {
           if (state.user != null) {
-            di<WebSocketService>().connect(userId: state.user!.id, roomId: "1");
             Navigator.push(
               context,
               MaterialPageRoute(

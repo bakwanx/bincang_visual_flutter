@@ -1,4 +1,5 @@
 import 'package:bincang_visual_flutter/features/room/data/datasource/remote_datasource.dart';
+import 'package:bincang_visual_flutter/features/room/data/models/create_room_model.dart';
 import 'package:bincang_visual_flutter/features/room/data/models/user_model.dart';
 import 'package:bincang_visual_flutter/features/room/domain/repositories/remote_repository.dart';
 import 'package:either_dart/src/either.dart';
@@ -16,6 +17,16 @@ class RemoteRepositoryImpl implements RemoteRepository {
       return Left(Exception('failed to register'));
     }
 
+  }
+
+  @override
+  Future<Either<Exception, CreateRoomModel>> createRoom() async {
+    try {
+      final result = await remoteDataSource.createRoom();
+      return Right(result);
+    }catch(e) {
+      return Left(Exception('failed to create room'));
+    }
   }
 
 }

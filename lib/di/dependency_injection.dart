@@ -51,7 +51,7 @@ Future<void> initWebSocketDependency() async {
 
   // Cubit
   di.registerFactory<SignalingCubit>(
-    () => SignalingCubit(signalingUseCase: di()),
+    () => SignalingCubit(signalingUseCase: di(), webSocketService: di()),
   );
   di.registerFactory<RemoteCubit>(
         () => RemoteCubit(remoteUseCase: di()),

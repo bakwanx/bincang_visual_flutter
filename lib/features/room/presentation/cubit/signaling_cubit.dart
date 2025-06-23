@@ -8,6 +8,7 @@ import 'package:bincang_visual_flutter/features/room/data/models/leave_payload_m
 import 'package:bincang_visual_flutter/features/room/domain/usecase/signaling_usecase.dart';
 import 'package:bincang_visual_flutter/utils/theme/app_toast.dart';
 
+import '../../../../infrastructure/websocket_service.dart';
 import '../../../../utils/old_signaling/signaling.dart';
 import '../../data/models/ice_candidate_payload_model.dart';
 import '../../data/models/request_offering_model.dart';
@@ -20,8 +21,9 @@ part 'signaling_cubit.freezed.dart';
 
 class SignalingCubit extends Cubit<SignalingState> {
   final SignalingUseCase signalingUseCase;
+  final WebSocketService webSocketService;
 
-  SignalingCubit({required this.signalingUseCase}) : super(SignalingState());
+  SignalingCubit({required this.signalingUseCase, required this.webSocketService}) : super(SignalingState());
 
   Map<String, dynamic> configuration = {
     'iceServers': [
@@ -45,9 +47,15 @@ class SignalingCubit extends Cubit<SignalingState> {
 
   void init({required UserModel user, required String roomId}) {
     emit(state.copyWith(user: user, roomId: roomId));
-    initLocalMedia();
-    initListen();
-    requestOffer();
+    initWebsocket();
+  }
+
+  initWebsocket() {
+    webSocketService.connect(userId: state.user!.id, roomId: "1").then((_) {
+      initLocalMedia();
+      initListen();
+      requestOffer();
+    });
   }
 
   void initListen() {
@@ -58,19 +66,19 @@ class SignalingCubit extends Cubit<SignalingState> {
             message.payload,
           );
           // // send offer
-          debugPrint('==== receive a request join: ${requestOfferring.toJson()}');
+          print('==== receive a request join: ${requestOfferring.toJson()}');
           offerSdp(requestOfferring);
           break;
         case "offer":
           // // answer the offer
           final sdpPayload = SdpPayloadModel.fromJson(message.payload);
-          debugPrint('==== receive offer: ${sdpPayload.toJson()}');
+          print('==== receive offer: ${sdpPayload.toJson()}');
           sendAnswerSdp(sdpPayload);
           setRemoteSdp(sdpPayload.userFrom, sdpPayload);
           break;
         case "answer":
           final sdpPayload = SdpPayloadModel.fromJson(message.payload);
-          debugPrint('==== receive answer: ${sdpPayload.toJson()}');
+          print('==== receive answer: ${sdpPayload.toJson()}');
           // // set answer
           setRemoteSdp(sdpPayload.userFrom, sdpPayload);
           break;
@@ -78,19 +86,18 @@ class SignalingCubit extends Cubit<SignalingState> {
           final iceCandidate = IceCandidatePayloadModel.fromJson(
             message.payload,
           );
-          debugPrint('==== receive candidate: ${iceCandidate.toJson()}');
+          print('==== receive candidate: ${iceCandidate.toJson()}');
           collectIceCandidates(iceCandidate);
           break;
         // colect candidates
         case 'leave':
           final leavePayloadModel = LeavePayloadModel.fromJson(message.payload);
-          debugPrint('==== receive candidate: ${leavePayloadModel.toJson()}');
+          print('==== receive leave message: ${leavePayloadModel.toJson()}');
           AppToast.showToast(
             message: "${leavePayloadModel.user.username} has left the meeting",
           );
           removeRemoteUserConnection(leavePayloadModel);
           break;
-        // colect candidates
       }
     });
   }

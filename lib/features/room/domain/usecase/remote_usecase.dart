@@ -3,7 +3,7 @@ import 'package:either_dart/either.dart';
 
 import '../../data/models/user_model.dart';
 
-class RemoteUseCase{
+class RemoteUseCase {
   final RemoteRepository repository;
 
   RemoteUseCase({required this.repository});

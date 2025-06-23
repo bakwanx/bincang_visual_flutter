@@ -15,7 +15,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$RemoteState {
 
- UserModel? get user; Exception? get exception; bool get isLoading;
+ UserModel? get user; Exception? get exception; CreateRoomModel? get createRoomModel; bool get isLoading;
 /// Create a copy of RemoteState
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -26,16 +26,16 @@ $RemoteStateCopyWith<RemoteState> get copyWith => _$RemoteStateCopyWithImpl<Remo
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is RemoteState&&(identical(other.user, user) || other.user == user)&&(identical(other.exception, exception) || other.exception == exception)&&(identical(other.isLoading, isLoading) || other.isLoading == isLoading));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is RemoteState&&(identical(other.user, user) || other.user == user)&&(identical(other.exception, exception) || other.exception == exception)&&(identical(other.createRoomModel, createRoomModel) || other.createRoomModel == createRoomModel)&&(identical(other.isLoading, isLoading) || other.isLoading == isLoading));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,user,exception,isLoading);
+int get hashCode => Object.hash(runtimeType,user,exception,createRoomModel,isLoading);
 
 @override
 String toString() {
-  return 'RemoteState(user: $user, exception: $exception, isLoading: $isLoading)';
+  return 'RemoteState(user: $user, exception: $exception, createRoomModel: $createRoomModel, isLoading: $isLoading)';
 }
 
 
@@ -46,7 +46,7 @@ abstract mixin class $RemoteStateCopyWith<$Res>  {
   factory $RemoteStateCopyWith(RemoteState value, $Res Function(RemoteState) _then) = _$RemoteStateCopyWithImpl;
 @useResult
 $Res call({
- UserModel? user, Exception? exception, bool isLoading
+ UserModel? user, Exception? exception, CreateRoomModel? createRoomModel, bool isLoading
 });
 
 
@@ -63,11 +63,12 @@ class _$RemoteStateCopyWithImpl<$Res>
 
 /// Create a copy of RemoteState
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? user = freezed,Object? exception = freezed,Object? isLoading = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? user = freezed,Object? exception = freezed,Object? createRoomModel = freezed,Object? isLoading = null,}) {
   return _then(_self.copyWith(
 user: freezed == user ? _self.user : user // ignore: cast_nullable_to_non_nullable
 as UserModel?,exception: freezed == exception ? _self.exception : exception // ignore: cast_nullable_to_non_nullable
-as Exception?,isLoading: null == isLoading ? _self.isLoading : isLoading // ignore: cast_nullable_to_non_nullable
+as Exception?,createRoomModel: freezed == createRoomModel ? _self.createRoomModel : createRoomModel // ignore: cast_nullable_to_non_nullable
+as CreateRoomModel?,isLoading: null == isLoading ? _self.isLoading : isLoading // ignore: cast_nullable_to_non_nullable
 as bool,
   ));
 }
@@ -79,11 +80,12 @@ as bool,
 
 
 class _RemoteState extends RemoteState {
-   _RemoteState({this.user, this.exception, this.isLoading = false}): super._();
+   _RemoteState({this.user, this.exception, this.createRoomModel, this.isLoading = false}): super._();
   
 
 @override final  UserModel? user;
 @override final  Exception? exception;
+@override final  CreateRoomModel? createRoomModel;
 @override@JsonKey() final  bool isLoading;
 
 /// Create a copy of RemoteState
@@ -96,16 +98,16 @@ _$RemoteStateCopyWith<_RemoteState> get copyWith => __$RemoteStateCopyWithImpl<_
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _RemoteState&&(identical(other.user, user) || other.user == user)&&(identical(other.exception, exception) || other.exception == exception)&&(identical(other.isLoading, isLoading) || other.isLoading == isLoading));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _RemoteState&&(identical(other.user, user) || other.user == user)&&(identical(other.exception, exception) || other.exception == exception)&&(identical(other.createRoomModel, createRoomModel) || other.createRoomModel == createRoomModel)&&(identical(other.isLoading, isLoading) || other.isLoading == isLoading));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,user,exception,isLoading);
+int get hashCode => Object.hash(runtimeType,user,exception,createRoomModel,isLoading);
 
 @override
 String toString() {
-  return 'RemoteState(user: $user, exception: $exception, isLoading: $isLoading)';
+  return 'RemoteState(user: $user, exception: $exception, createRoomModel: $createRoomModel, isLoading: $isLoading)';
 }
 
 
@@ -116,7 +118,7 @@ abstract mixin class _$RemoteStateCopyWith<$Res> implements $RemoteStateCopyWith
   factory _$RemoteStateCopyWith(_RemoteState value, $Res Function(_RemoteState) _then) = __$RemoteStateCopyWithImpl;
 @override @useResult
 $Res call({
- UserModel? user, Exception? exception, bool isLoading
+ UserModel? user, Exception? exception, CreateRoomModel? createRoomModel, bool isLoading
 });
 
 
@@ -133,11 +135,12 @@ class __$RemoteStateCopyWithImpl<$Res>
 
 /// Create a copy of RemoteState
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? user = freezed,Object? exception = freezed,Object? isLoading = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? user = freezed,Object? exception = freezed,Object? createRoomModel = freezed,Object? isLoading = null,}) {
   return _then(_RemoteState(
 user: freezed == user ? _self.user : user // ignore: cast_nullable_to_non_nullable
 as UserModel?,exception: freezed == exception ? _self.exception : exception // ignore: cast_nullable_to_non_nullable
-as Exception?,isLoading: null == isLoading ? _self.isLoading : isLoading // ignore: cast_nullable_to_non_nullable
+as Exception?,createRoomModel: freezed == createRoomModel ? _self.createRoomModel : createRoomModel // ignore: cast_nullable_to_non_nullable
+as CreateRoomModel?,isLoading: null == isLoading ? _self.isLoading : isLoading // ignore: cast_nullable_to_non_nullable
 as bool,
   ));
 }

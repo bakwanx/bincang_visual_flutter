@@ -8,6 +8,7 @@ sealed class RemoteState with _$RemoteState{
   factory RemoteState({
     UserModel? user,
     Exception? exception,
+    CreateRoomModel? createRoomModel,
     @Default(false) bool isLoading
   }) = _RemoteState;
 }

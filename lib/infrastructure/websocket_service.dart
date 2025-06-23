@@ -19,13 +19,13 @@ class WebSocketService {
 
   Stream<dynamic> get stream => _controller.stream;
 
-  void connect({required String userId, required String roomId}) {
+  Future<void> connect({required String userId, required String roomId}) async {
     _userId = userId;
     _roomId = roomId;
 
     final uri = Uri.parse(
       'wss://bincang-visual.cloud/ws',
-    ).replace(queryParameters: {'username': _userId, 'roomId': _roomId});
+    ).replace(queryParameters: {'userId': _userId, 'roomId': _roomId});
     _controller = StreamController.broadcast();
 
     _channel = WebSocketChannel.connect(uri);
