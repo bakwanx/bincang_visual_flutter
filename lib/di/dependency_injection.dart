@@ -1,17 +1,18 @@
-import 'package:bincang_visual_flutter/features/room/data/datasource/remote_datasource.dart';
-import 'package:bincang_visual_flutter/features/room/domain/repositories/remote_repository.dart';
-import 'package:bincang_visual_flutter/features/room/domain/usecase/remote_usecase.dart';
-import 'package:bincang_visual_flutter/features/room/presentation/cubit/remote_cubit.dart';
+import 'package:bincang_visual_flutter/src/data/datasource/remote_datasource.dart';
+import 'package:bincang_visual_flutter/src/domain/repositories/remote_repository.dart';
+import 'package:bincang_visual_flutter/src/domain/usecase/remote_usecase.dart';
+import 'package:bincang_visual_flutter/src/presentation/cubit/banner_cubit.dart';
+import 'package:bincang_visual_flutter/src/presentation/cubit/remote_cubit.dart';
 import 'package:dio/dio.dart';
 import 'package:get_it/get_it.dart';
-import 'package:bincang_visual_flutter/features/room/data/datasource/signaling_datasource.dart';
-import 'package:bincang_visual_flutter/features/room/data/repositories/signaling_repository_impl.dart';
-import 'package:bincang_visual_flutter/features/room/domain/repositories/signaling_repository.dart';
-import 'package:bincang_visual_flutter/features/room/domain/usecase/signaling_usecase.dart';
-import 'package:bincang_visual_flutter/features/room/presentation/cubit/signaling_cubit.dart';
+import 'package:bincang_visual_flutter/src/data/datasource/signaling_datasource.dart';
+import 'package:bincang_visual_flutter/src/data/repositories/signaling_repository_impl.dart';
+import 'package:bincang_visual_flutter/src/domain/repositories/signaling_repository.dart';
+import 'package:bincang_visual_flutter/src/domain/usecase/signaling_usecase.dart';
+import 'package:bincang_visual_flutter/src/presentation/cubit/signaling_cubit.dart';
 import 'package:bincang_visual_flutter/infrastructure/websocket_service.dart';
 
-import '../features/room/data/repositories/remote_repository_impl.dart';
+import '../src/data/repositories/remote_repository_impl.dart';
 
 final di = GetIt.asNewInstance();
 
@@ -55,5 +56,8 @@ Future<void> initWebSocketDependency() async {
   );
   di.registerFactory<RemoteCubit>(
         () => RemoteCubit(remoteUseCase: di()),
+  );
+  di.registerFactory<BannerCubit>(
+        () => BannerCubit(),
   );
 }

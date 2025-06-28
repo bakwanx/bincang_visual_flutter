@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 
+import 'package:bincang_visual_flutter/utils/const/api_path.dart';
 import 'package:flutter/material.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 
@@ -22,9 +23,8 @@ class WebSocketService {
   Future<void> connect({required String userId, required String roomId}) async {
     _userId = userId;
     _roomId = roomId;
-
     final uri = Uri.parse(
-      'wss://bincang-visual.cloud/ws',
+      ApiPath.wsBaseUrl,
     ).replace(queryParameters: {'userId': _userId, 'roomId': _roomId});
     _controller = StreamController.broadcast();
 

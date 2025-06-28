@@ -1,12 +1,12 @@
 // import 'dart:convert';
 // import 'package:flutter/cupertino.dart';
 // import 'package:flutter_webrtc/flutter_webrtc.dart';
-// import 'package:bincang_visual_flutter/features/room/data/models/request_offering_model.dart';
-// import 'package:bincang_visual_flutter/features/room/data/models/websocket_message_model.dart';
+// import 'package:bincang_visual_flutter/src/data/models/request_offering_model.dart';
+// import 'package:bincang_visual_flutter/src/data/models/websocket_message_model.dart';
 // import 'package:bincang_visual_flutter/infrastructure/websocket_service.dart';
 //
-// import '../../features/room/data/models/ice_candidate_payload_model.dart';
-// import '../../features/room/data/models/sdp_payload_model.dart';
+// import '../../src/data/models/ice_candidate_payload_model.dart';
+// import '../../src/data/models/sdp_payload_model.dart';
 //
 // typedef void StreamStateCallback(MediaStream stream);
 //
