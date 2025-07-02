@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 
 enum ScreenType {
   watch,
@@ -45,4 +46,40 @@ extension ContextExtension on BuildContext {
     final deviceWidth = MediaQuery.of(this).size.height;
     return deviceWidth;
   }
+
+  Future<dynamic> push(Widget page) =>
+      Navigator.of(this).push(CustomPageRoute(page));
+
+  Future<dynamic> pushReplacement(Widget page) =>
+      Navigator.of(this).pushReplacement(CustomPageRoute(page));
+
+  Future<dynamic> pushAndRemoveUntil(Widget page) =>
+      Navigator.of(this).pushAndRemoveUntil(
+        CustomPageRoute(page),
+            (route) => false,
+      );
+}
+
+class CustomPageRoute<T> extends PageRoute<T> {
+  final Widget child;
+  CustomPageRoute(this.child);
+
+  @override
+  @SemanticsHintOverrides()
+  Color? get barrierColor => Colors.transparent;
+
+  @override
+  String? get barrierLabel => null;
+
+  @override
+  Widget buildPage(BuildContext context, Animation<double> animation,
+      Animation<double> secondaryAnimation) {
+    return FadeTransition(opacity: animation, child: child);
+  }
+
+  @override
+  bool get maintainState => true;
+
+  @override
+  Duration get transitionDuration => const Duration(milliseconds: 500);
 }

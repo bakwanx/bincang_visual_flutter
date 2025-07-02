@@ -7,6 +7,7 @@ import '../../data/models/create_room_model.dart';
 import '../../data/models/user_model.dart';
 
 part 'remote_cubit.freezed.dart';
+
 part 'remote_state.dart';
 
 class RemoteCubit extends Cubit<RemoteState> {
@@ -34,16 +35,24 @@ class RemoteCubit extends Cubit<RemoteState> {
     final result = await remoteUseCase.createRoom();
 
     result.fold(
-          (l) {
-
-        emit((state).copyWith(exception: l, isLoading: false, createRoomModel: null));
+      (l) {
+        emit(
+          (state).copyWith(
+            exception: l,
+            isLoading: false,
+            createRoomModel: null,
+          ),
+        );
       },
-          (r) {
-
-        emit((state).copyWith(createRoomModel: r, isLoading: false, exception: null));
+      (r) {
+        emit(
+          (state).copyWith(
+            createRoomModel: r,
+            isLoading: false,
+            exception: null,
+          ),
+        );
       },
     );
   }
-
-
 }

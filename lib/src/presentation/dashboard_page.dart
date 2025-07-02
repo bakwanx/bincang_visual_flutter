@@ -1,5 +1,5 @@
 import 'package:bincang_visual_flutter/src/presentation/cubit/banner_cubit.dart';
-import 'package:bincang_visual_flutter/src/presentation/username_input_page.dart';
+import 'package:bincang_visual_flutter/src/presentation/preview_page.dart';
 import 'package:bincang_visual_flutter/src/presentation/widgets/banner_item.dart';
 import 'package:bincang_visual_flutter/src/presentation/widgets/base_dialog.dart';
 import 'package:bincang_visual_flutter/src/presentation/widgets/custom_snackbar.dart';
@@ -39,7 +39,9 @@ class DashboardPageUI extends StatefulWidget {
 }
 
 class _DashboardPageUIState extends State<DashboardPageUI> {
-  TextEditingController invitationCode = TextEditingController();
+  TextEditingController invitationCode = TextEditingController(
+    text: "T9s-0N7I-aXw"
+  );
 
   AppBar appBar() {
     return AppBar(
@@ -134,15 +136,7 @@ class _DashboardPageUIState extends State<DashboardPageUI> {
       );
       return;
     }
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder:
-            (ctx) => UsernameInputPage(
-          roomId: invitationCode.text,
-        ),
-      ),
-    );
+    context.push(PreviewPage(roomId: invitationCode.text));
   }
 
   Widget body() {
@@ -181,7 +175,7 @@ class _DashboardPageUIState extends State<DashboardPageUI> {
                   Column(
                     children: [
                       CustomTextButton(
-                        padding: const EdgeInsets.all(16),
+                        padding: const EdgeInsets.all(12),
                         backgroundColor: AppColors.primaryColor,
                         onPressed: () async {
                           await context.read<RemoteCubit>().createRoom();
@@ -189,7 +183,7 @@ class _DashboardPageUIState extends State<DashboardPageUI> {
                         child: Row(
                           children: [
                             Icon(
-                              Icons.camera_alt,
+                              Icons.video_call_outlined,
                               size: 20,
                               color: Colors.white,
                             ),
@@ -229,7 +223,7 @@ class _DashboardPageUIState extends State<DashboardPageUI> {
                     mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                     children: [
                       CustomTextButton(
-                        padding: const EdgeInsets.all(16),
+                        padding: const EdgeInsets.all(12),
                         backgroundColor: AppColors.primaryColor,
                         onPressed: () async {
                           await context.read<RemoteCubit>().createRoom();
@@ -336,24 +330,27 @@ class _DashboardPageUIState extends State<DashboardPageUI> {
       );
     }
 
-    return Container(
-      margin: EdgeInsets.symmetric(horizontal: 24),
-      child:
-          context.isPhone()
-              ? newMeetingOrJoin()
-              : Row(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: [
-                  Expanded(child: newMeetingOrJoin()),
-                  Expanded(child: banner()),
-                ],
-              ),
+    return SingleChildScrollView(
+      child: Container(
+        height: context.height(),
+        margin: EdgeInsets.symmetric(horizontal: 24),
+        child:
+        context.isPhone()
+            ? newMeetingOrJoin()
+            : Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+          children: [
+            Expanded(child: newMeetingOrJoin()),
+            Expanded(child: banner()),
+          ],
+        ),
+      ),
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(appBar: appBar(), body: body());
+    return Scaffold(appBar: appBar(), body: body(), resizeToAvoidBottomInset: false);
   }
 }

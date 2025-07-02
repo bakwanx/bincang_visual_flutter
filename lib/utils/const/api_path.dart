@@ -1,8 +1,22 @@
 class ApiPath {
-  // wss://bincang-visual.cloud/ws
-  static String wsBaseUrl = 'ws://192.168.110.36:3939/ws';
-  static String baseUrl = 'https://bincang-visual.cloud';
-  static String localBaseUrl = 'http://192.168.110.36:3939';
-  static String registerUser = '$localBaseUrl/register-user';
-  static String createRoom = '$localBaseUrl/create-room';
+
+  static AppMode appMode = AppMode.local;
+
+  // wss
+  static String wsBaseUrl = 'ws://${_getBaseURL(appMode)}/ws';
+  // https
+  static String baseUrl = 'http://${_getBaseURL(appMode)}';
+  static String registerUser = '$baseUrl/register-user';
+  static String createRoom = '$baseUrl/create-room';
+}
+
+enum AppMode { live, local }
+
+String _getBaseURL(final AppMode appMode) {
+  switch (appMode) {
+    case AppMode.live:
+      return 'bincang-visual.cloud';
+    default:
+      return '192.168.31.149:3939';
+  }
 }

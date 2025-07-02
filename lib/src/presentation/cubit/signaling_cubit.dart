@@ -23,7 +23,10 @@ class SignalingCubit extends Cubit<SignalingState> {
   final SignalingUseCase signalingUseCase;
   final WebSocketService webSocketService;
 
-  SignalingCubit({required this.signalingUseCase, required this.webSocketService}) : super(SignalingState());
+  SignalingCubit({
+    required this.signalingUseCase,
+    required this.webSocketService,
+  }) : super(SignalingState());
 
   Map<String, dynamic> configuration = {
     'iceServers': [
@@ -43,14 +46,19 @@ class SignalingCubit extends Cubit<SignalingState> {
     ],
   };
 
-  void init({required UserModel user, required String roomId}) {
+  void init({
+    required UserModel user,
+    required String roomId,
+    required bool cameraEnabled,
+    required bool micEnabled,
+  }) {
     emit(state.copyWith(user: user, roomId: roomId));
     initWebsocket(roomId);
+    initLocalMedia(cameraEnabled: cameraEnabled, micEnabled: micEnabled);
   }
 
   initWebsocket(String roomId) {
     webSocketService.connect(userId: state.user!.id, roomId: roomId).then((_) {
-      // initLocalMedia();
       initListen();
       requestOffer();
     });
@@ -170,7 +178,6 @@ class SignalingCubit extends Cubit<SignalingState> {
     final remoteUser = sdpPayload.userFrom;
     final remoteUserId = remoteUser.id;
 
-
     RTCPeerConnection pc = await createPeerConnection(configuration);
 
     pc.onTrack = (RTCTrackEvent event) {
@@ -186,7 +193,9 @@ class SignalingCubit extends Cubit<SignalingState> {
     };
 
     emit(
-      state.copyWith(peerConnection: {...state.peerConnection, remoteUserId: pc}),
+      state.copyWith(
+        peerConnection: {...state.peerConnection, remoteUserId: pc},
+      ),
     );
 
     state.localStream?.getTracks().forEach((track) {
@@ -214,13 +223,20 @@ class SignalingCubit extends Cubit<SignalingState> {
     signalingUseCase.sendMessage(
       WebSocketMessageModel(
         type: "answer",
-        payload: SdpPayloadModel(sdp: answer.sdp!, typeSdp: answer.type!, userFrom: state.user!,
-          userTarget: sdpPayload.userFrom,),
+        payload: SdpPayloadModel(
+          sdp: answer.sdp!,
+          typeSdp: answer.type!,
+          userFrom: state.user!,
+          userTarget: sdpPayload.userFrom,
+        ),
       ),
     );
   }
 
-  Future<void> setRemoteSdp(UserModel userModel, SdpPayloadModel sdpPayload) async {
+  Future<void> setRemoteSdp(
+    UserModel userModel,
+    SdpPayloadModel sdpPayload,
+  ) async {
     final description = RTCSessionDescription(
       sdpPayload.sdp,
       sdpPayload.typeSdp,
@@ -250,7 +266,7 @@ class SignalingCubit extends Cubit<SignalingState> {
   }
 
   Future<void> collectIceCandidates(
-      IceCandidatePayloadModel iceCandidate,
+    IceCandidatePayloadModel iceCandidate,
   ) async {
     final fromUser = iceCandidate.userFrom.id;
     // final iceCandidate = IceCandidatePayloadModel.fromJson(
@@ -283,25 +299,19 @@ class SignalingCubit extends Cubit<SignalingState> {
     );
   }
 
-  void removeTrack(MediaStreamTrack track){
-    var localStream = state.localStream;
-    try{
-      localStream!.removeTrack(track);
-    }catch(e){
+  void removeTrack(MediaStreamTrack track) {
+    try {
+      track.stop();
+    } catch (e) {
       debugPrint(e.toString());
     }
-
-    emit(state.copyWith(localStream: localStream));
   }
 
   void leave() {
     signalingUseCase.sendMessage(
       WebSocketMessageModel(
         type: "leave",
-        payload: LeavePayloadModel(
-          roomId: state.roomId,
-          user: state.user!,
-        ),
+        payload: LeavePayloadModel(roomId: state.roomId, user: state.user!),
       ),
     );
     for (final pc in state.peerConnection.values) {
@@ -322,7 +332,7 @@ class SignalingCubit extends Cubit<SignalingState> {
         localStream: localStream,
         remoteStream: {},
         peerConnection: {},
-        iceCandidates: {}
+        iceCandidates: {},
       ),
     );
 
@@ -333,12 +343,7 @@ class SignalingCubit extends Cubit<SignalingState> {
     for (final pc in state.peerConnection.values) {
       pc.close();
     }
-    emit(
-      state.copyWith(
-          peerConnection: {},
-          iceCandidates: {}
-      ),
-    );
+    emit(state.copyWith(peerConnection: {}, iceCandidates: {}));
 
     requestOffer();
   }
@@ -368,7 +373,10 @@ class SignalingCubit extends Cubit<SignalingState> {
     );
   }
 
-  Future<void> initLocalMedia() async {
+  Future<void> initLocalMedia({
+    required bool micEnabled,
+    required bool cameraEnabled,
+  }) async {
     final mediaConstraints = {
       'audio': true,
       'video': {'facingMode': 'user'},
@@ -376,7 +384,24 @@ class SignalingCubit extends Cubit<SignalingState> {
     final localStream = await navigator.mediaDevices.getUserMedia(
       mediaConstraints,
     );
+    if (!micEnabled) {
+      for (var track in localStream.getAudioTracks()) {
+        track.enabled = !track.enabled;
+      }
+    }
+    if (!cameraEnabled) {
+      for (var track in localStream.getVideoTracks()) {
+        track.enabled = !track.enabled;
+      }
+    }
     emit(state.copyWith(localStream: localStream));
+  }
+
+  Future<void> getDisplayMedia({bool video = true, bool audio = false}) async {
+    Map<String, dynamic> constraints = {'audio': audio, 'video': video};
+    final displayStream = await navigator.mediaDevices.getDisplayMedia(
+      constraints,
+    );
   }
 
   void registerPeerConnectionListeners(String username) {
@@ -387,8 +412,11 @@ class SignalingCubit extends Cubit<SignalingState> {
     };
 
     pc?.onConnectionState = (RTCPeerConnectionState state) {
-      if (localStream != null && state == RTCPeerConnectionState.RTCPeerConnectionStateDisconnected || state == RTCPeerConnectionState.RTCPeerConnectionStateClosed) {
-        reconnect();
+      if (localStream != null &&
+              state ==
+                  RTCPeerConnectionState.RTCPeerConnectionStateDisconnected ||
+          state == RTCPeerConnectionState.RTCPeerConnectionStateClosed) {
+        // reconnect();
         // localStream.getTracks().forEach((track) => track.stop());
       }
       debugPrint('Connection state change: $state');
