@@ -1,6 +1,7 @@
 import 'dart:math';
 
 import 'package:bincang_visual_flutter/src/data/models/user_model.dart';
+import 'package:bincang_visual_flutter/src/domain/entities/call_entity.dart';
 import 'package:bincang_visual_flutter/src/presentation/cubit/signaling_cubit.dart';
 import 'package:bincang_visual_flutter/src/presentation/dashboard_page.dart';
 import 'package:bincang_visual_flutter/utils/extension/context_extension.dart';
@@ -13,52 +14,23 @@ import '../../../di/dependency_injection.dart';
 import '../../utils/theme/app_colors.dart';
 
 class CallPage extends StatelessWidget {
-  final UserModel user;
-  final String roomId;
-  final bool micEnabled;
-  final bool cameraEnabled;
+  final CallEntity callEntity;
 
-  const CallPage({
-    super.key,
-    required this.user,
-    required this.roomId,
-    required this.micEnabled,
-    required this.cameraEnabled,
-  });
+  const CallPage({super.key, required this.callEntity});
 
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create:
-          (context) =>
-              di<SignalingCubit>()..init(
-                user: user,
-                roomId: roomId,
-                cameraEnabled: cameraEnabled,
-                micEnabled: micEnabled,
-              ),
-      child: CallPageUI(
-        user: user,
-        roomId: roomId,
-        cameraEnabled: cameraEnabled,
-        micEnabled: micEnabled,
-      ),
+      create: (context) => di<SignalingCubit>()..init(callEntity: callEntity),
+      child: CallPageUI(callEntity: callEntity),
     );
   }
 }
 
 class CallPageUI extends StatefulWidget {
-  final UserModel user;
-  final String roomId;
-  final bool micEnabled;
-  final bool cameraEnabled;
+  final CallEntity callEntity;
 
-  const CallPageUI({
-    required this.user,
-    required this.roomId,
-    required this.micEnabled,
-    required this.cameraEnabled,
-  });
+  const CallPageUI({required this.callEntity});
 
   @override
   State<CallPageUI> createState() => _CallPageUIState();
@@ -93,8 +65,8 @@ class _CallPageUIState extends State<CallPageUI> {
   }
 
   void initCameraAndMic() {
-    micEnabled = widget.micEnabled;
-    cameraEnabled = widget.cameraEnabled;
+    micEnabled = widget.callEntity.micEnabled;
+    cameraEnabled = widget.callEntity.cameraEnabled;
   }
 
   Future<void> init() async {
@@ -224,76 +196,171 @@ class _CallPageUIState extends State<CallPageUI> {
     context.pushAndRemoveUntil(DashboardPage());
   }
 
-  // Example number of items
-  final int numberOfItems = 20;
 
-  Widget participants() {
+  Widget participant() {
     return LayoutBuilder(
       builder: (context, constraints) {
-        // Get the screen width and height
-        double screenWidth = constraints.maxWidth;
-        double screenHeight = constraints.maxHeight;
+        final double screenWidth = constraints.maxWidth;
+        final double screenHeight = constraints.maxHeight;
+        final bool isPortrait = screenHeight > screenWidth;
 
-        // Calculate number of columns and rows
-        int columns = (sqrt(numberOfItems)).ceil();
-        int rows = (numberOfItems / columns).ceil();
+        const double minTileWidth = 200;
+        const double minTileHeight = 200;
 
-        // Calculate tile size
+        if (remoteRenderers.entries.length <= 2) {
+          return remoteRenderers.entries.length == 1
+              ? _buildFullScreenParticipant(
+                remoteRenderers.entries.first.key,
+                remoteRenderers.entries.first.value,
+                false,
+              )
+              : (isPortrait
+                  ? Column(
+                    children:
+                        remoteRenderers.entries.map((entry) {
+                          return Expanded(
+                            child: _buildParticipantTile(
+                              entry.key,
+                              entry.value,
+                            ),
+                          );
+                        }).toList(),
+                  )
+                  : Row(
+                    children:
+                        remoteRenderers.entries.map((entry) {
+                          return Expanded(
+                            child: _buildParticipantTile(
+                              entry.key,
+                              entry.value,
+                            ),
+                          );
+                        }).toList(),
+                  ));
+        }
+
+        int columns = isPortrait ? 2 : 3;
         double tileWidth = screenWidth / columns;
-        double tileHeight = screenHeight / rows;
+        double tileHeight =
+            screenHeight / ((remoteRenderers.entries.length / columns).ceil());
 
-        return GridView.builder(
-          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: context.isTablet() ? 2 : 2,
-            childAspectRatio: context.isTablet() ? tileWidth / tileHeight : 0.9,
-          ),
-          scrollDirection: context.isTablet() ? Axis.horizontal : Axis.vertical,
-          itemCount: remoteRenderers.entries.isEmpty ? 0 : numberOfItems,
-          itemBuilder: (context, index) {
-            final entry = remoteRenderers.entries.toList()[0];
-            final renderer = entry.value;
-            final key = entry.key;
-            return Container(
-              margin: const EdgeInsets.all(4.0),
-              child: Stack(
-                children: [
-                  Container(
-                    decoration: BoxDecoration(
-                      color: Colors.grey,
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(20),
-                      child: RTCVideoView(
-                        renderer,
-                        objectFit:
-                            RTCVideoViewObjectFit.RTCVideoViewObjectFitCover,
-                      ),
-                    ),
-                  ),
-                  Align(
-                    alignment: Alignment.bottomCenter,
-                    child: Padding(
-                      padding: const EdgeInsets.only(
-                        bottom: 16,
-                        right: 4,
-                        left: 4,
-                      ),
-                      child: Text(
-                        key,
-                        style: AppTextStyle.smallNormal.copyWith(
-                          color: Colors.white,
-                        ),
-                        textAlign: TextAlign.center,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            );
-          },
-        );
+        if (tileWidth >= minTileWidth && tileHeight >= minTileHeight) {
+          return Wrap(
+            alignment: WrapAlignment.center,
+            spacing: 8,
+            runSpacing: 8,
+            children:
+                remoteRenderers.entries.map((entry) {
+                  return SizedBox(
+                    width: tileWidth - 8,
+                    height: tileHeight - 8,
+                    child: _buildParticipantTile(entry.key, entry.value),
+                  );
+                }).toList(),
+          );
+        } else {
+          return GridView.builder(
+            padding: const EdgeInsets.all(8),
+            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: isPortrait ? 2 : 4,
+              crossAxisSpacing: 8,
+              mainAxisSpacing: 8,
+              childAspectRatio: isPortrait ? 3 / 4 : 4 / 3,
+            ),
+            itemCount: remoteRenderers.entries.length,
+            itemBuilder: (context, index) {
+              // final entry = remoteRenderers.entries.toList()[0];
+              // final renderer = entry.value;
+              // final key = entry.key;
+              // // final isActive = participant.key == widget.activeSpeakerId;
+              // final isActive = false;
+              final participant = remoteRenderers.entries.elementAt(index);
+              return _buildParticipantTile(participant.key, participant.value);
+            },
+          );
+        }
       },
+    );
+  }
+
+  Widget _buildFullScreenParticipant(
+    String id,
+    RTCVideoRenderer renderer,
+    bool isActive,
+  ) {
+    return Padding(
+      padding: const EdgeInsets.all(8),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(12),
+        child: Stack(
+          children: [
+            Container(
+              color: Colors.black,
+              child: RTCVideoView(
+                renderer,
+                objectFit: RTCVideoViewObjectFit.RTCVideoViewObjectFitCover,
+              ),
+            ),
+            if (isActive)
+              Container(
+                decoration: BoxDecoration(
+                  border: Border.all(color: Colors.greenAccent, width: 4),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+            Positioned(
+              bottom: 8,
+              left: 8,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                decoration: BoxDecoration(
+                  color: Colors.black54,
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: Text(
+                  id,
+                  style: const TextStyle(color: Colors.white, fontSize: 12),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildParticipantTile(String id, RTCVideoRenderer renderer) {
+    return Padding(
+      padding: const EdgeInsets.all(8.0),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(12),
+        child: Stack(
+          children: [
+            Container(
+              color: Colors.black,
+              child: RTCVideoView(
+                renderer,
+                objectFit: RTCVideoViewObjectFit.RTCVideoViewObjectFitCover,
+              ),
+            ),
+            Positioned(
+              bottom: 4,
+              left: 4,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                decoration: BoxDecoration(
+                  color: Colors.black54,
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: Text(
+                  id,
+                  style: const TextStyle(color: Colors.white, fontSize: 10),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 
@@ -301,7 +368,7 @@ class _CallPageUIState extends State<CallPageUI> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('user: ${widget.user.username}'),
+        title: Text('user: ${widget.callEntity.user.username}'),
         actions: [
           if (context.isPhone()) ...[
             IconButton(onPressed: toggleChatPanel, icon: Icon(Icons.message)),
@@ -341,8 +408,7 @@ class _CallPageUIState extends State<CallPageUI> {
           builder: (context, state) {
             return Stack(
               children: [
-
-                participants(),
+                participant(),
 
                 // Local Video
                 Positioned(
@@ -463,7 +529,7 @@ class _DisplayChat extends StatefulWidget {
     super.key,
     required this.toggleChatPanel,
     required this.animationDuration,
-    required this.isChatVisible
+    required this.isChatVisible,
   });
 
   @override
@@ -473,11 +539,13 @@ class _DisplayChat extends StatefulWidget {
 class _DisplayChatState extends State<_DisplayChat> {
   final messageController = TextEditingController();
 
-
   @override
   Widget build(BuildContext context) {
     final double screenWidth = MediaQuery.of(context).size.width;
-    final double chatWidth = screenWidth * 0.6; // 60% of screen
+    final double chatWidth =
+        context.isTablet()
+            ? screenWidth * 0.4
+            : context.width(); // 60% of screen
     return // Chat Panel
     AnimatedPositioned(
       duration: widget.animationDuration,
@@ -504,28 +572,45 @@ class _DisplayChatState extends State<_DisplayChat> {
               ],
             ),
             Expanded(
-              child: ListView.builder(
-                padding: EdgeInsets.all(12),
-                itemCount: 20,
-                itemBuilder:
-                    (context, index) => Align(
-                      alignment:
-                          index % 2 == 0
-                              ? Alignment.centerLeft
-                              : Alignment.centerRight,
-                      child: Container(
-                        margin: EdgeInsets.symmetric(vertical: 4),
-                        padding: EdgeInsets.all(10),
-                        decoration: BoxDecoration(
-                          color:
-                              index % 2 == 0
-                                  ? Colors.grey[300]
-                                  : Colors.blue[200],
-                          borderRadius: BorderRadius.circular(12),
+              child: BlocBuilder<SignalingCubit, SignalingState>(
+                builder: (context, state) {
+                  return ListView.builder(
+                    padding: EdgeInsets.all(12),
+                    itemCount: state.chat.length,
+                    itemBuilder:
+                        (context, index) => Align(
+                          alignment:
+                              state.user!.id != state.chat[index].userFrom.id
+                                  ? Alignment.centerLeft
+                                  : Alignment.centerRight,
+                          child: Column(
+                            crossAxisAlignment:
+                                state.user!.id != state.chat[index].userFrom.id
+                                    ? CrossAxisAlignment.start
+                                    : CrossAxisAlignment.end,
+                            children: [
+                              Text(
+                                state.chat[index].userFrom.username,
+                                style: TextStyle(color: Colors.grey),
+                              ),
+                              Container(
+                                margin: EdgeInsets.symmetric(vertical: 4),
+                                padding: EdgeInsets.all(10),
+                                decoration: BoxDecoration(
+                                  color:
+                                      state.user!.id !=
+                                              state.chat[index].userFrom.id
+                                          ? Colors.grey[300]
+                                          : Colors.blue[200],
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: Text(state.chat[index].message),
+                              ),
+                            ],
+                          ),
                         ),
-                        child: Text('Message #$index'),
-                      ),
-                    ),
+                  );
+                },
               ),
             ),
             Padding(
@@ -534,6 +619,7 @@ class _DisplayChatState extends State<_DisplayChat> {
                 children: [
                   Expanded(
                     child: TextField(
+                      controller: messageController,
                       decoration: InputDecoration(
                         hintText: 'Type a message...',
                         border: OutlineInputBorder(
@@ -543,7 +629,17 @@ class _DisplayChatState extends State<_DisplayChat> {
                     ),
                   ),
                   SizedBox(width: 8),
-                  IconButton(icon: Icon(Icons.send), onPressed: () {}),
+                  IconButton(
+                    icon: Icon(Icons.send),
+                    onPressed: () {
+                      if (messageController.text.isNotEmpty) {
+                        context.read<SignalingCubit>().sendChat(
+                          messageController.text,
+                        );
+                        messageController.clear();
+                      }
+                    },
+                  ),
                 ],
               ),
             ),

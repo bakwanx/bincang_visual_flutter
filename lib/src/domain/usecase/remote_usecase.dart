@@ -1,3 +1,4 @@
+import 'package:bincang_visual_flutter/src/data/models/coturn_configuration_model.dart';
 import 'package:bincang_visual_flutter/src/data/models/create_room_model.dart';
 import 'package:bincang_visual_flutter/src/domain/repositories/remote_repository.dart';
 import 'package:either_dart/either.dart';
@@ -15,5 +16,9 @@ class RemoteUseCase {
 
   Future<Either<Exception, CreateRoomModel>> createRoom() async {
     return repository.createRoom();
+  }
+
+  Future<Either<Exception, CoturnConfigurationModel>> getConfiguration() async {
+    return repository.getConfiguration();
   }
 }

@@ -1,3 +1,4 @@
+import 'package:bincang_visual_flutter/src/domain/entities/call_entity.dart';
 import 'package:bincang_visual_flutter/src/presentation/cubit/remote_cubit.dart';
 import 'package:bincang_visual_flutter/src/presentation/cubit/signaling_cubit.dart';
 import 'package:bincang_visual_flutter/src/presentation/widgets/custom_snackbar.dart';
@@ -42,10 +43,13 @@ class _PreviewPageUIState extends State<PreviewPageUI> {
   final RTCVideoRenderer localRenderer = RTCVideoRenderer();
 
   void registerUser() {
+
     if (usernameController.text.isEmpty) {
+
       CustomSnackBar(context: context, message: "Username Empty");
       return;
     }
+
     context.read<RemoteCubit>().registerUser(usernameController.text);
   }
 
@@ -278,18 +282,25 @@ class _PreviewPageUIState extends State<PreviewPageUI> {
       ),
       body: BlocListener<RemoteCubit, RemoteState>(
         listener: (context, state) {
-          if (state.user != null) {
+          if (state.user != null && state.coturnConfigurationModel != null) {
             context.pushReplacement(
               CallPage(
-                roomId: widget.roomId,
-                user: state.user!,
-                cameraEnabled: cameraEnabled,
-                micEnabled: micEnabled,
+                callEntity: CallEntity(
+                  user: state.user!,
+                  roomId: widget.roomId,
+                  micEnabled: micEnabled,
+                  cameraEnabled: cameraEnabled,
+                  configurationModel: state.coturnConfigurationModel!,
+                ),
               ),
             );
           }
         },
-        listenWhen: (previous, current) => previous.user != current.user,
+        listenWhen:
+            (previous, current) =>
+                previous.user != current.user &&
+                previous.coturnConfigurationModel !=
+                    current.coturnConfigurationModel,
         child: context.isPhone() ? phoneView() : tabletView(),
       ),
     );

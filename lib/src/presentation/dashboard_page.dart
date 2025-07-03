@@ -39,9 +39,7 @@ class DashboardPageUI extends StatefulWidget {
 }
 
 class _DashboardPageUIState extends State<DashboardPageUI> {
-  TextEditingController invitationCode = TextEditingController(
-    text: "T9s-0N7I-aXw"
-  );
+  TextEditingController invitationCode = TextEditingController();
 
   AppBar appBar() {
     return AppBar(

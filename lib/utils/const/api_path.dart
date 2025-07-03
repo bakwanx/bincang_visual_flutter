@@ -1,13 +1,14 @@
 class ApiPath {
 
-  static AppMode appMode = AppMode.local;
+  static AppMode appMode = AppMode.live;
 
   // wss
-  static String wsBaseUrl = 'ws://${_getBaseURL(appMode)}/ws';
+  static String wsBaseUrl = 'wss://${_getBaseURL(appMode)}/ws';
   // https
-  static String baseUrl = 'http://${_getBaseURL(appMode)}';
+  static String baseUrl = 'https://${_getBaseURL(appMode)}';
   static String registerUser = '$baseUrl/register-user';
   static String createRoom = '$baseUrl/create-room';
+  static String coturnConfiguration = '$baseUrl/coturn';
 }
 
 enum AppMode { live, local }

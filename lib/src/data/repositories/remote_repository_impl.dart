@@ -1,4 +1,5 @@
 import 'package:bincang_visual_flutter/src/data/datasource/remote_datasource.dart';
+import 'package:bincang_visual_flutter/src/data/models/coturn_configuration_model.dart';
 import 'package:bincang_visual_flutter/src/data/models/create_room_model.dart';
 import 'package:bincang_visual_flutter/src/data/models/user_model.dart';
 import 'package:bincang_visual_flutter/src/domain/repositories/remote_repository.dart';
@@ -24,6 +25,16 @@ class RemoteRepositoryImpl implements RemoteRepository {
     try {
       final result = await remoteDataSource.createRoom();
       return Right(result);
+    }catch(e) {
+      return Left(Exception('failed to create room $e'));
+    }
+  }
+
+  @override
+  Future<Either<Exception, CoturnConfigurationModel>> getConfiguration() async {
+    try {
+      final result = await remoteDataSource.getConfiguration();
+      return Right(result.data);
     }catch(e) {
       return Left(Exception('failed to create room $e'));
     }

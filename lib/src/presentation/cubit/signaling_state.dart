@@ -9,10 +9,12 @@ sealed class SignalingState with _$SignalingState{
     @Default(0) int currentBanner,
     UserModel? user,
     @Default('') String roomId,
+    @Default([]) List<ChatPayloadModel> chat,
     @Default({}) Map<String, List<IceCandidatePayloadModel>> iceCandidates,
     @Default({}) Map<String, MediaStream> remoteStream,
     @Default({}) Map<String, RTCPeerConnection> peerConnection,
     @Default('') String toastMessage,
+    CoturnConfigurationModel? coturnConfiguration,
     MediaStream? localStream,
   }) = _SignalingState;
 }

@@ -1,23 +1,23 @@
+import 'package:bincang_visual_flutter/src/data/models/chat_payload_model.dart';
+import 'package:bincang_visual_flutter/src/data/models/coturn_configuration_model.dart';
+import 'package:bincang_visual_flutter/src/data/models/leave_payload_model.dart';
 import 'package:bincang_visual_flutter/src/data/models/user_model.dart';
+import 'package:bincang_visual_flutter/src/domain/entities/call_entity.dart';
+import 'package:bincang_visual_flutter/src/domain/usecase/signaling_usecase.dart';
+import 'package:bincang_visual_flutter/utils/theme/app_toast.dart';
 import 'package:bloc/bloc.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_webrtc/flutter_webrtc.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
-import 'package:meta/meta.dart';
-import 'package:bincang_visual_flutter/src/data/models/leave_payload_model.dart';
-import 'package:bincang_visual_flutter/src/domain/usecase/signaling_usecase.dart';
-import 'package:bincang_visual_flutter/utils/theme/app_toast.dart';
 
 import '../../../../infrastructure/websocket_service.dart';
-import '../../../../utils/old_signaling/signaling.dart';
 import '../../data/models/ice_candidate_payload_model.dart';
 import '../../data/models/request_offering_model.dart';
 import '../../data/models/sdp_payload_model.dart';
 import '../../data/models/websocket_message_model.dart';
 
-part 'signaling_state.dart';
-
 part 'signaling_cubit.freezed.dart';
+part 'signaling_state.dart';
 
 class SignalingCubit extends Cubit<SignalingState> {
   final SignalingUseCase signalingUseCase;
@@ -28,33 +28,19 @@ class SignalingCubit extends Cubit<SignalingState> {
     required this.webSocketService,
   }) : super(SignalingState());
 
-  Map<String, dynamic> configuration = {
-    'iceServers': [
-      {
-        'urls': ['turn:bincang-visual.cloud:3478?transport=udp'],
-        'username': 'bincang-visual.cloud',
-        'credential': 'bakwanx123!',
-      },
-      {
-        'urls': ['turns:bincang-visual.cloud:5349?transport=tcp'],
-        'username': 'bincang-visual.cloud',
-        'credential': 'bakwanx123!',
-      },
-      {
-        'urls': ['stun:202.10.42.100:3478', 'stun:stun.flashdance.cx:3478'],
-      },
-    ],
-  };
-
-  void init({
-    required UserModel user,
-    required String roomId,
-    required bool cameraEnabled,
-    required bool micEnabled,
-  }) {
-    emit(state.copyWith(user: user, roomId: roomId));
-    initWebsocket(roomId);
-    initLocalMedia(cameraEnabled: cameraEnabled, micEnabled: micEnabled);
+  void init({required CallEntity callEntity}) {
+    emit(
+      state.copyWith(
+        user: callEntity.user,
+        roomId: callEntity.roomId,
+        coturnConfiguration: callEntity.configurationModel,
+      ),
+    );
+    initWebsocket(callEntity.roomId);
+    initLocalMedia(
+      cameraEnabled: callEntity.cameraEnabled,
+      micEnabled: callEntity.micEnabled,
+    );
   }
 
   initWebsocket(String roomId) {
@@ -95,7 +81,11 @@ class SignalingCubit extends Cubit<SignalingState> {
           print('==== receive candidate: ${iceCandidate.toJson()}');
           collectIceCandidates(iceCandidate);
           break;
-        // colect candidates
+        case 'chat':
+          final chatPayloadModel = ChatPayloadModel.fromJson(message.payload);
+          print('==== receive chat message: ${chatPayloadModel.toJson()}');
+          receiveChat(chatPayloadModel);
+          break;
         case 'leave':
           final leavePayloadModel = LeavePayloadModel.fromJson(message.payload);
           print('==== receive leave message: ${leavePayloadModel.toJson()}');
@@ -121,7 +111,9 @@ class SignalingCubit extends Cubit<SignalingState> {
   }
 
   Future<void> offerSdp(RequestOfferingModel req) async {
-    RTCPeerConnection pc = await createPeerConnection(configuration);
+    RTCPeerConnection pc = await createPeerConnection(
+      state.coturnConfiguration!.toJson(),
+    );
 
     pc.onTrack = (RTCTrackEvent event) {
       print('Got remote track: ${event.streams[0]}');
@@ -178,7 +170,9 @@ class SignalingCubit extends Cubit<SignalingState> {
     final remoteUser = sdpPayload.userFrom;
     final remoteUserId = remoteUser.id;
 
-    RTCPeerConnection pc = await createPeerConnection(configuration);
+    RTCPeerConnection pc = await createPeerConnection(
+      state.coturnConfiguration!.toJson(),
+    );
 
     pc.onTrack = (RTCTrackEvent event) {
       debugPrint('Got remote track: ${event.streams[0]}');
@@ -435,5 +429,28 @@ class SignalingCubit extends Cubit<SignalingState> {
     //   onAddRemoteStream[username]?.call(stream);
     //   remoteStream[username] = stream;
     // };
+  }
+
+  Future<void> sendChat(String message) async {
+    final chat = ChatPayloadModel(
+      roomId: state.roomId,
+      userFrom: state.user!,
+      message: message,
+    );
+    signalingUseCase.sendMessage(
+      WebSocketMessageModel(
+        type: "chat",
+        payload: chat,
+      ),
+    );
+    emit(state.copyWith(
+        chat: [...state.chat, chat]
+    ));
+  }
+
+  Future<void> receiveChat(ChatPayloadModel chat) async {
+    emit(state.copyWith(
+      chat: [...state.chat, chat]
+    ));
   }
 }

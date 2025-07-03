@@ -9,6 +9,7 @@ sealed class RemoteState with _$RemoteState{
     UserModel? user,
     Exception? exception,
     CreateRoomModel? createRoomModel,
+    CoturnConfigurationModel? coturnConfigurationModel,
     @Default(false) bool isLoading
   }) = _RemoteState;
 }
