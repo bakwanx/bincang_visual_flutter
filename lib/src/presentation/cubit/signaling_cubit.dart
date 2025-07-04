@@ -1,6 +1,7 @@
 import 'package:bincang_visual_flutter/src/data/models/chat_payload_model.dart';
 import 'package:bincang_visual_flutter/src/data/models/coturn_configuration_model.dart';
 import 'package:bincang_visual_flutter/src/data/models/leave_payload_model.dart';
+import 'package:bincang_visual_flutter/src/data/models/ping_payload_model.dart';
 import 'package:bincang_visual_flutter/src/data/models/user_model.dart';
 import 'package:bincang_visual_flutter/src/domain/entities/call_entity.dart';
 import 'package:bincang_visual_flutter/src/domain/usecase/signaling_usecase.dart';
@@ -53,6 +54,14 @@ class SignalingCubit extends Cubit<SignalingState> {
   void initListen() {
     signalingUseCase.onMessage.listen((message) {
       switch (message.type) {
+        case "pingpong":
+          final requestOfferring = PingPongPayloadModel.fromJson(
+            message.payload,
+          );
+          // // send offer
+          print('==== receive a ping: ${requestOfferring.toJson()}');
+          _pingPong();
+          break;
         case "join":
           final requestOfferring = RequestOfferingModel.fromJson(
             message.payload,
@@ -96,6 +105,15 @@ class SignalingCubit extends Cubit<SignalingState> {
           break;
       }
     });
+  }
+
+  void _pingPong() {
+    signalingUseCase.sendMessage(
+      WebSocketMessageModel(
+        type: "pingpong",
+        payload: PingPongPayloadModel(message: "pong"),
+      ),
+    );
   }
 
   Future<void> requestOffer() async {

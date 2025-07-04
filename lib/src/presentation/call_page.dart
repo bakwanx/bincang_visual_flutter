@@ -374,6 +374,7 @@ class _CallPageUIState extends State<CallPageUI> {
             IconButton(onPressed: toggleChatPanel, icon: Icon(Icons.message)),
           ],
         ],
+        automaticallyImplyLeading: false,
       ),
       body: BlocListener<SignalingCubit, SignalingState>(
         listenWhen:
