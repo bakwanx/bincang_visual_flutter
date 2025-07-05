@@ -12,7 +12,7 @@ abstract class RemoteDataSource {
 
   Future<CreateRoomModel> createRoom();
 
-  Future<CoturnConfigurationModelResponse> getConfiguration();
+  Future<String> getConfiguration();
 }
 
 class RemoteDataSourceImpl implements RemoteDataSource {
@@ -46,13 +46,16 @@ class RemoteDataSourceImpl implements RemoteDataSource {
   }
 
   @override
-  Future<CoturnConfigurationModelResponse> getConfiguration() async {
+  Future<String> getConfiguration() async {
     final result = await dio.get(ApiPath.coturnConfiguration);
 
     if (result.statusCode != 200) {
       throw DioException(requestOptions: result.requestOptions);
     }
 
-    return CoturnConfigurationModelResponse.fromJson(result.data);
+    final responseObj = CoturnConfigurationModelResponse.fromJson(result.data);
+
+
+    return responseObj.data;
   }
 }

@@ -1,8 +1,11 @@
+import 'dart:convert';
+
 import 'package:bincang_visual_flutter/src/data/datasource/remote_datasource.dart';
 import 'package:bincang_visual_flutter/src/data/models/coturn_configuration_model.dart';
 import 'package:bincang_visual_flutter/src/data/models/create_room_model.dart';
 import 'package:bincang_visual_flutter/src/data/models/user_model.dart';
 import 'package:bincang_visual_flutter/src/domain/repositories/remote_repository.dart';
+import 'package:bincang_visual_flutter/utils/encrypt/encrypt_util.dart';
 import 'package:either_dart/src/either.dart';
 
 class RemoteRepositoryImpl implements RemoteRepository {
@@ -34,7 +37,9 @@ class RemoteRepositoryImpl implements RemoteRepository {
   Future<Either<Exception, CoturnConfigurationModel>> getConfiguration() async {
     try {
       final result = await remoteDataSource.getConfiguration();
-      return Right(result.data);
+      final decrypt = EncryptUtil.decryptData(result);
+      final decode = jsonDecode(decrypt);
+      return Right(CoturnConfigurationModel.fromJson(decode));
     }catch(e) {
       return Left(Exception('failed to create room $e'));
     }

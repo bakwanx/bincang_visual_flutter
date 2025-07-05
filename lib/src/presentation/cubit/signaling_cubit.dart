@@ -59,7 +59,7 @@ class SignalingCubit extends Cubit<SignalingState> {
             message.payload,
           );
           // // send offer
-          print('==== receive a ping: ${requestOfferring.toJson()}');
+          debugPrint('==== receive a ping: ${requestOfferring.toJson()}');
           _pingPong();
           break;
         case "join":
@@ -67,19 +67,19 @@ class SignalingCubit extends Cubit<SignalingState> {
             message.payload,
           );
           // // send offer
-          print('==== receive a request join: ${requestOfferring.toJson()}');
+          debugPrint('==== receive a request join: ${requestOfferring.toJson()}');
           offerSdp(requestOfferring);
           break;
         case "offer":
           // // answer the offer
           final sdpPayload = SdpPayloadModel.fromJson(message.payload);
-          print('==== receive offer: ${sdpPayload.toJson()}');
+          debugPrint('==== receive offer: ${sdpPayload.toJson()}');
           sendAnswerSdp(sdpPayload);
           setRemoteSdp(sdpPayload.userFrom, sdpPayload);
           break;
         case "answer":
           final sdpPayload = SdpPayloadModel.fromJson(message.payload);
-          print('==== receive answer: ${sdpPayload.toJson()}');
+          debugPrint('==== receive answer: ${sdpPayload.toJson()}');
           // // set answer
           setRemoteSdp(sdpPayload.userFrom, sdpPayload);
           break;
@@ -87,17 +87,17 @@ class SignalingCubit extends Cubit<SignalingState> {
           final iceCandidate = IceCandidatePayloadModel.fromJson(
             message.payload,
           );
-          print('==== receive candidate: ${iceCandidate.toJson()}');
+          debugPrint('==== receive candidate: ${iceCandidate.toJson()}');
           collectIceCandidates(iceCandidate);
           break;
         case 'chat':
           final chatPayloadModel = ChatPayloadModel.fromJson(message.payload);
-          print('==== receive chat message: ${chatPayloadModel.toJson()}');
+          debugPrint('==== receive chat message: ${chatPayloadModel.toJson()}');
           receiveChat(chatPayloadModel);
           break;
         case 'leave':
           final leavePayloadModel = LeavePayloadModel.fromJson(message.payload);
-          print('==== receive leave message: ${leavePayloadModel.toJson()}');
+          debugPrint('==== receive leave message: ${leavePayloadModel.toJson()}');
           AppToast.showToast(
             message: "${leavePayloadModel.user.username} has left the meeting",
           );
@@ -336,7 +336,7 @@ class SignalingCubit extends Cubit<SignalingState> {
 
     // Clean up local stream
     var localStream = state.localStream;
-    localStream?.getTracks().forEach((t) => t.stop());
+    localStream?.getTracks().forEach((t) async => await t.stop());
     localStream?.dispose();
     localStream = null;
     emit(

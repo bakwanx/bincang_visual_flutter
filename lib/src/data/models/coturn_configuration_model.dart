@@ -1,5 +1,5 @@
 class CoturnConfigurationModelResponse {
-  CoturnConfigurationModel data;
+  String data;
   String message;
 
   CoturnConfigurationModelResponse({
@@ -8,12 +8,12 @@ class CoturnConfigurationModelResponse {
   });
 
   factory CoturnConfigurationModelResponse.fromJson(Map<String, dynamic> json) => CoturnConfigurationModelResponse(
-    data: CoturnConfigurationModel.fromJson(json["data"]),
+    data: json["data"],
     message: json["message"],
   );
 
   Map<String, dynamic> toJson() => {
-    "data": data.toJson(),
+    "data": data,
     "message": message,
   };
 }

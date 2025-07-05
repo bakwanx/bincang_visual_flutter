@@ -43,9 +43,7 @@ class _PreviewPageUIState extends State<PreviewPageUI> {
   final RTCVideoRenderer localRenderer = RTCVideoRenderer();
 
   void registerUser() {
-
     if (usernameController.text.isEmpty) {
-
       CustomSnackBar(context: context, message: "Username Empty");
       return;
     }
@@ -120,15 +118,18 @@ class _PreviewPageUIState extends State<PreviewPageUI> {
         Expanded(
           child:
               cameraEnabled
-                  ? Container(
-                    color: Colors.red,
-                    width: 400,
-                    height: 400,
-                    child: RTCVideoView(
-                      localRenderer,
-                      mirror: true,
-                      objectFit:
-                          RTCVideoViewObjectFit.RTCVideoViewObjectFitCover,
+                  ? ClipRRect(
+                    borderRadius: BorderRadius.circular(12),
+                    child: Container(
+                      color: Colors.grey,
+                      width: 400,
+                      height: 400,
+                      child: RTCVideoView(
+                        localRenderer,
+                        mirror: true,
+                        objectFit:
+                            RTCVideoViewObjectFit.RTCVideoViewObjectFitCover,
+                      ),
                     ),
                   )
                   : Container(color: Colors.grey),
@@ -186,15 +187,19 @@ class _PreviewPageUIState extends State<PreviewPageUI> {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               if (cameraEnabled) ...[
-                Container(
-                  margin: EdgeInsets.all(24),
-                  color: Colors.red,
-                  width: 400,
-                  height: 400,
-                  child: RTCVideoView(
-                    localRenderer,
-                    mirror: true,
-                    objectFit: RTCVideoViewObjectFit.RTCVideoViewObjectFitCover,
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(12),
+                  child: Container(
+                    margin: EdgeInsets.all(24),
+                    color: Colors.grey,
+                    width: 400,
+                    height: 400,
+                    child: RTCVideoView(
+                      localRenderer,
+                      mirror: true,
+                      objectFit:
+                          RTCVideoViewObjectFit.RTCVideoViewObjectFitCover,
+                    ),
                   ),
                 ),
               ] else ...[

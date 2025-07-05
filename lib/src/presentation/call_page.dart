@@ -190,9 +190,10 @@ class _CallPageUIState extends State<CallPageUI> {
       renderer.srcObject = null;
       renderer.dispose();
     }
+    localRenderer.srcObject = null;
     remoteRenderers.clear();
-    // localRenderer.dispose();
     localRenderer.dispose();
+    setState(() {});
     context.pushAndRemoveUntil(DashboardPage());
   }
 
