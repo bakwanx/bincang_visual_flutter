@@ -13,7 +13,7 @@ class EncryptUtil {
     final encrypter = Encrypter(
       AES(key, mode: AESMode.cbc, padding: 'PKCS7'),
     );
-    print("pesan ${Env.privateKey}");
+
     return encrypter.decrypt(
       Encrypted.from64(text),
       iv: iv,

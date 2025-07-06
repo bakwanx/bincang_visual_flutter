@@ -116,7 +116,7 @@
 //     collection.snapshots().listen((snapshot) {
 //       snapshot.docChanges.forEach((change) {
 //         if (change.type == DocumentChangeType.added) {
-//           debugPrint("pesan ${change.doc.id}");
+//           debugPrint("${change.doc.id}");
 //         }
 //       });
 //     });

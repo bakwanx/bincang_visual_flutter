@@ -1,3 +1,5 @@
+import 'package:bincang_visual_flutter/env/env.dart';
+
 class ApiPath {
 
   static AppMode appMode = AppMode.prod;
@@ -17,9 +19,9 @@ enum AppMode { prod, dev }
 String _getBaseURL(final AppMode appMode) {
   switch (appMode) {
     case AppMode.prod:
-      return 'bincang-visual.cloud';
+      return Env.prodUrl;
     default:
-      return '192.168.31.149:3939';
+      return Env.devUrl;
   }
 }
 

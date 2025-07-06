@@ -162,7 +162,7 @@ class _DashboardPageUIState extends State<DashboardPageUI> {
                   style: AppTextStyle.bodyLarge.copyWith(fontSize: 40),
                 ),
                 Text(
-                  "Connect, collaborate, and celebrate from anywhere with Google Meet",
+                  "Connect, collaborate, and celebrate from anywhere with Bincang Visual",
                   style: AppTextStyle.bodyLarge.copyWith(
                     fontSize: 20,
                     color: Colors.grey,
@@ -200,6 +200,9 @@ class _DashboardPageUIState extends State<DashboardPageUI> {
                       CustomTextFormField(
                         controller: invitationCode,
                         hintText: "Enter the code",
+                        onFieldSubmitted: (value){
+                          joinHandler();
+                        },
                         prefixIcon: Icon(
                           Icons.keyboard,
                           color: AppColors.primaryColor,
@@ -248,6 +251,10 @@ class _DashboardPageUIState extends State<DashboardPageUI> {
                       Expanded(
                         child: CustomTextFormField(
                           controller: invitationCode,
+                          hintText: "Enter the code",
+                          onFieldSubmitted: (value){
+                            joinHandler();
+                          },
                           prefixIcon: Icon(
                             Icons.keyboard,
                             color: AppColors.primaryColor,

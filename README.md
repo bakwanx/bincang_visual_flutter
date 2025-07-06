@@ -1,16 +1,26 @@
-# bincang_visual_flutter
+# Bincang Visual Flutter
 
-A new Flutter project.
+Bincang visual is a web app meeting platform based on Flutter and Go. it allows users to make meeting within a minute without cost, fees and no login required. Just create new meeting and ready to go!
 
-## Getting Started
+This project is still under development.
+But still, you can try for live demo [here](https://bakwanx.github.io/bincang-visual-web/)
 
-This project is a starting point for a Flutter application.
+## Prerequisite
 
-A few resources to get you started if this is your first Flutter project:
+This project requires backend and coturn service to run. So these are the links to get
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+- [Backend Golang](https://github.com/bakwanx/bincang-visual) for signaling
+- [Coturn](https://github.com/coturn/coturn)
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+If you prefer to use public STUN/TURN server, you can skip Coturn and get public [STUN](https://gist.github.com/mondain/b0ec1cf5f60ae726202e) or TURN server on the Internet.
+
+## Setup Instructions
+
+To use this project, follow this steps:
+
+1. **Clone the repository**: Clone this repository to your machine
+2. **Clone service repository**: Clone and setup backend and coturn service
+3. **Install Flutter**: Ensure you have installed Flutter SDK on your machine. If not, you can follow the instruction from [Flutter Doc](https://docs.flutter.dev/get-started/install) to set it up
+4. **Setup**: .env
+5. **Install Dependencies**: Navigate to the project directory and install the required dependencies
+6. **Run the App:** Now, you can run the app on your connected device or emulator

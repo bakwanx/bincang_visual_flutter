@@ -29,6 +29,7 @@ class CustomTextFormField extends StatelessWidget {
   final String? Function(String?)? validator;
   final BoxConstraints? prefixIconConstraints;
   final Function()? onTap;
+  final Function(String)? onFieldSubmitted;
 
   const CustomTextFormField({
     super.key,
@@ -56,6 +57,7 @@ class CustomTextFormField extends StatelessWidget {
     this.validator,
     this.prefixIconConstraints,
     this.onTap,
+    this.onFieldSubmitted
   });
 
   @override
@@ -71,6 +73,7 @@ class CustomTextFormField extends StatelessWidget {
       textCapitalization: textCapitalization ?? TextCapitalization.none,
       onChanged: (val) => onChanged != null ? onChanged!(val) : null,
       validator: (val) => validator != null ? validator!(val) : null,
+      onFieldSubmitted: onFieldSubmitted,
       decoration: InputDecoration(
         contentPadding:
         isDense ?? false

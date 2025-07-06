@@ -622,6 +622,14 @@ class _DisplayChatState extends State<_DisplayChat> {
                   Expanded(
                     child: TextField(
                       controller: messageController,
+                      onSubmitted: (value){
+                        if (value.isNotEmpty) {
+                          context.read<SignalingCubit>().sendChat(
+                            messageController.text,
+                          );
+                          messageController.clear();
+                        }
+                      },
                       decoration: InputDecoration(
                         hintText: 'Type a message...',
                         border: OutlineInputBorder(

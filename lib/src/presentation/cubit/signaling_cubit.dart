@@ -58,7 +58,6 @@ class SignalingCubit extends Cubit<SignalingState> {
           final requestOfferring = PingPongPayloadModel.fromJson(
             message.payload,
           );
-          // // send offer
           debugPrint('==== receive a ping: ${requestOfferring.toJson()}');
           _pingPong();
           break;

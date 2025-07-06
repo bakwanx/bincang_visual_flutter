@@ -25,6 +25,7 @@ class RemoteCubit extends Cubit<RemoteState> {
 
     UserModel? userModel;
     CoturnConfigurationModel? coturnConfigurationModel;
+
     result.fold(
       (l) {
         emit((state).copyWith(exception: l, isLoading: false, user: null));
