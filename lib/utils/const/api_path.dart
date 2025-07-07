@@ -1,7 +1,6 @@
 import 'package:bincang_visual_flutter/env/env.dart';
 
 class ApiPath {
-
   static AppMode appMode = AppMode.prod;
 
   // wss
@@ -9,9 +8,10 @@ class ApiPath {
 
   // https
   static String httpBaseUrl = _getHTTPBaseURL(appMode);
-  static String registerUser = '$httpBaseUrl/register-user';
-  static String createRoom = '$httpBaseUrl/create-room';
-  static String coturnConfiguration = '$httpBaseUrl/coturn';
+  static String registerUser = '/register-user';
+  static String createRoom = '/create-room';
+  static String coturnConfiguration = '/coturn';
+  static String checkRoom = '/room';
 }
 
 enum AppMode { prod, dev }

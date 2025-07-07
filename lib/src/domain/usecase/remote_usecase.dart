@@ -21,4 +21,8 @@ class RemoteUseCase {
   Future<Either<Exception, CoturnConfigurationModel>> getConfiguration() async {
     return repository.getConfiguration();
   }
+
+  Future<Either<Exception, void>> checkRoom(String roomId) async {
+    return repository.checkRoom(roomId);
+  }
 }

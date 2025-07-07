@@ -7,4 +7,5 @@ abstract class RemoteRepository {
   Future<Either<Exception, UserModel>> registerUser(String username);
   Future<Either<Exception, CreateRoomModel>> createRoom();
   Future<Either<Exception, CoturnConfigurationModel>> getConfiguration();
+  Future<Either<Exception, void>> checkRoom(String roomId);
 }

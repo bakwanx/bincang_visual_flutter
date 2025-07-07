@@ -28,7 +28,7 @@ class RemoteCubit extends Cubit<RemoteState> {
 
     result.fold(
       (l) {
-        emit((state).copyWith(exception: l, isLoading: false, user: null));
+        emit(state.copyWith(exception: l, isLoading: false, user: null));
       },
       (r) {
         userModel = r;
@@ -38,11 +38,7 @@ class RemoteCubit extends Cubit<RemoteState> {
     config.fold(
       (l) {
         emit(
-          (state).copyWith(
-            exception: l,
-            isLoading: false,
-            createRoomModel: null,
-          ),
+          state.copyWith(exception: l, isLoading: false, createRoomModel: null),
         );
       },
       (r) {
@@ -51,7 +47,7 @@ class RemoteCubit extends Cubit<RemoteState> {
     );
 
     emit(
-      (state).copyWith(
+      state.copyWith(
         coturnConfigurationModel: coturnConfigurationModel,
         user: userModel,
         isLoading: false,
@@ -68,21 +64,34 @@ class RemoteCubit extends Cubit<RemoteState> {
     room.fold(
       (l) {
         emit(
-          (state).copyWith(
-            exception: l,
-            isLoading: false,
-            createRoomModel: null,
-          ),
+          state.copyWith(exception: l, isLoading: false, createRoomModel: null),
         );
       },
       (r) {
         emit(
-          (state).copyWith(
-            createRoomModel: r,
-            exception: null,
-            isLoading: false,
-          ),
+          state.copyWith(createRoomModel: r, exception: null, isLoading: false),
         );
+      },
+    );
+  }
+
+  Future<bool> checkRoom(String roomId) async {
+    emit(state.copyWith(isLoading: true));
+
+    final room = await remoteUseCase.checkRoom(roomId);
+
+    return room.fold(
+      (l) {
+        emit(
+          state.copyWith(isLoading: false),
+        );
+        return false;
+      },
+      (r) {
+        emit(
+          state.copyWith(isLoading: false),
+        );
+        return true;
       },
     );
   }

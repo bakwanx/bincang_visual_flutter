@@ -41,7 +41,17 @@ class RemoteRepositoryImpl implements RemoteRepository {
       final decode = jsonDecode(decrypt);
       return Right(CoturnConfigurationModel.fromJson(decode));
     }catch(e) {
-      return Left(Exception('failed to create room $e'));
+      return Left(Exception('failed to get configuration $e'));
+    }
+  }
+
+  @override
+  Future<Either<Exception, void>> checkRoom(String roomId) async {
+    try {
+      final result = await remoteDataSource.checkRoom(roomId);
+      return Right(result);
+    }catch(e) {
+      return Left(Exception('failed to check room $e'));
     }
   }
 

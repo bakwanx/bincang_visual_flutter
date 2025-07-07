@@ -10,7 +10,7 @@ sealed class RemoteState with _$RemoteState{
     Exception? exception,
     CreateRoomModel? createRoomModel,
     CoturnConfigurationModel? coturnConfigurationModel,
-    @Default(false) bool isLoading
+    @Default(false) bool isLoading,
   }) = _RemoteState;
 }
 

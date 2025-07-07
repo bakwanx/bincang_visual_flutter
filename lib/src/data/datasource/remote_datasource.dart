@@ -5,7 +5,6 @@ import 'package:bincang_visual_flutter/src/data/models/create_room_model.dart';
 import 'package:bincang_visual_flutter/src/data/models/user_model.dart';
 import 'package:bincang_visual_flutter/utils/const/api_path.dart';
 import 'package:dio/dio.dart';
-import 'package:flutter/material.dart';
 
 abstract class RemoteDataSource {
   Future<UserModel> registerUser(String username);
@@ -13,6 +12,8 @@ abstract class RemoteDataSource {
   Future<CreateRoomModel> createRoom();
 
   Future<String> getConfiguration();
+
+  Future<void> checkRoom(String roomId);
 }
 
 class RemoteDataSourceImpl implements RemoteDataSource {
@@ -55,7 +56,18 @@ class RemoteDataSourceImpl implements RemoteDataSource {
 
     final responseObj = CoturnConfigurationModelResponse.fromJson(result.data);
 
-
     return responseObj.data;
+  }
+
+  @override
+  Future<void> checkRoom(String roomId) async {
+    final result = await dio.get(
+      ApiPath.checkRoom,
+      queryParameters: {"roomId": roomId},
+    );
+
+    if (result.statusCode != 200) {
+      throw DioException(message: "room not found", requestOptions: result.requestOptions);
+    }
   }
 }

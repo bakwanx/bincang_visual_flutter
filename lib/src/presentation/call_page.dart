@@ -1,11 +1,7 @@
-import 'dart:math';
-
-import 'package:bincang_visual_flutter/src/data/models/user_model.dart';
 import 'package:bincang_visual_flutter/src/domain/entities/call_entity.dart';
 import 'package:bincang_visual_flutter/src/presentation/cubit/signaling_cubit.dart';
 import 'package:bincang_visual_flutter/src/presentation/dashboard_page.dart';
 import 'package:bincang_visual_flutter/utils/extension/context_extension.dart';
-import 'package:bincang_visual_flutter/utils/theme/app_text_style.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_webrtc/flutter_webrtc.dart';
@@ -37,7 +33,6 @@ class CallPageUI extends StatefulWidget {
 }
 
 class _CallPageUIState extends State<CallPageUI> {
-  // late MultipleUserSignaling multipleUserSignaling;
   double x = 0;
   double y = 0;
   bool micEnabled = true;
@@ -57,11 +52,8 @@ class _CallPageUIState extends State<CallPageUI> {
   @override
   void initState() {
     super.initState();
-
     init();
     initCameraAndMic();
-    // initRenderers();
-    // startSignaling();
   }
 
   void initCameraAndMic() {
@@ -80,77 +72,9 @@ class _CallPageUIState extends State<CallPageUI> {
           localRenderer.srcObject != state.localStream) {
         localRenderer.srcObject = state.localStream;
       }
-
-      // Loop through the updated remote streams
-      //   state.remoteStream.forEach((key, stream) {
-      //     if (!remoteRenderers.containsKey(key)) {
-      //       final renderer = RTCVideoRenderer();
-      //       renderer.initialize().then((_) {
-      //         renderer.srcObject = stream;
-      //         setState(() {
-      //           remoteRenderers[key] = renderer;
-      //         });
-      //       });
-      //     } else {
-      //       // Update existing renderer with the new stream
-      //       remoteRenderers[key]?.srcObject = stream;
-      //     }
-      //   });
-      //
-      //   // Remove remote users who left
-      //   remoteRenderers.forEach((key, renderer) {
-      //     if (!state.remoteStream.containsKey(key)) {
-      //       renderer.srcObject = null; // Clean up the stream if user leaves
-      //       remoteRenderers.remove(key);
-      //     }
-      //   });
     });
   }
 
-  // Future<void> initRenderers() async {
-  //   await localRenderer.initialize();
-  // }
-
-  // Future<void> startSignaling() async {
-  //   multipleUserSignaling = MultipleUserSignaling(
-  //     roomId: widget.roomId,
-  //     username: widget.username,
-  //   );
-  //   await multipleUserSignaling.initLocalMedia();
-  //   localRenderer.srcObject = multipleUserSignaling.localStream;
-  //
-  //   multipleUserSignaling.onAddRemoteStream[widget.username] = (stream) {
-  //     return;
-  //   };
-  //
-  //   multipleUserSignaling.onAddRemoteStream.forEach((user, callback) {
-  //     debugPrint("Already has callback for $user");
-  //   });
-  //
-  //   multipleUserSignaling.onAddRemoteStream['hanza'] = (MediaStream stream) {
-  //     if (!remoteRenderers.containsKey('hanza')) {
-  //       final renderer = RTCVideoRenderer();
-  //       renderer.initialize().then((_) {
-  //         renderer.srcObject = stream;
-  //         setState(() {
-  //           remoteRenderers['hanza'] = renderer;
-  //         });
-  //       });
-  //     }
-  //   };
-  //
-  //   multipleUserSignaling.listenRequestOffer();
-  //   multipleUserSignaling.requestOffer();
-  //   setState(() {});
-  // }
-
-  // Future<void> start() async {
-  //   multipleUserSignaling.requestOffer();
-  //   multipleUserSignaling.listenRequestOffer();
-  //   await multipleUserSignaling.initLocalMedia();
-  //   localRenderer.srcObject = multipleUserSignaling.localStream;
-  //   setState(() {});
-  // }
 
   void toggleMic() {
     if (context.read<SignalingCubit>().state.localStream != null) {

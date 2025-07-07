@@ -1,8 +1,10 @@
+import 'package:bincang_visual_flutter/infrastructure/logging_interceptor.dart';
 import 'package:bincang_visual_flutter/src/data/datasource/remote_datasource.dart';
 import 'package:bincang_visual_flutter/src/domain/repositories/remote_repository.dart';
 import 'package:bincang_visual_flutter/src/domain/usecase/remote_usecase.dart';
 import 'package:bincang_visual_flutter/src/presentation/cubit/banner_cubit.dart';
 import 'package:bincang_visual_flutter/src/presentation/cubit/remote_cubit.dart';
+import 'package:bincang_visual_flutter/utils/const/api_path.dart';
 import 'package:dio/dio.dart';
 import 'package:get_it/get_it.dart';
 import 'package:bincang_visual_flutter/src/data/datasource/signaling_datasource.dart';
@@ -16,14 +18,23 @@ import '../src/data/repositories/remote_repository_impl.dart';
 
 final di = GetIt.asNewInstance();
 
-Future<void> initDependency() async {}
-
-Future<void> initWebSocketDependency() async {
+Future<void> initDependency() async {
   di.registerLazySingleton(
-        () => Dio(),
+        () => Dio(
+          BaseOptions(
+              contentType: 'application/json',
+              connectTimeout: const Duration(seconds: 30),
+              sendTimeout: const Duration(seconds: 30),
+              receiveTimeout: const Duration(seconds: 30),
+            baseUrl: ApiPath.httpBaseUrl,
+          ),
+        ),
   );
+
+  di<Dio>().interceptors.add(LoggingInterceptor());
+
   di.registerLazySingleton(
-    () => WebSocketService(),
+        () => WebSocketService(),
   );
 
   // Datasource
@@ -36,7 +47,7 @@ Future<void> initWebSocketDependency() async {
 
   // Repository
   di.registerLazySingleton<SignalingRepository>(
-    () => SignalingRepositoryImpl(signalingDataSource: di()),
+        () => SignalingRepositoryImpl(signalingDataSource: di()),
   );
   di.registerLazySingleton<RemoteRepository>(
         () => RemoteRepositoryImpl(di()),
@@ -44,7 +55,7 @@ Future<void> initWebSocketDependency() async {
 
   // UseCase
   di.registerLazySingleton<SignalingUseCase>(
-    () => SignalingUseCase(repository: di()),
+        () => SignalingUseCase(repository: di()),
   );
   di.registerLazySingleton<RemoteUseCase>(
         () => RemoteUseCase(repository: di()),
@@ -52,7 +63,7 @@ Future<void> initWebSocketDependency() async {
 
   // Cubit
   di.registerFactory<SignalingCubit>(
-    () => SignalingCubit(signalingUseCase: di(), webSocketService: di()),
+        () => SignalingCubit(signalingUseCase: di(), webSocketService: di()),
   );
   di.registerFactory<RemoteCubit>(
         () => RemoteCubit(remoteUseCase: di()),

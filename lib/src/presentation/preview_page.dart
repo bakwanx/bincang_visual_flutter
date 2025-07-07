@@ -1,13 +1,9 @@
 import 'package:bincang_visual_flutter/src/domain/entities/call_entity.dart';
 import 'package:bincang_visual_flutter/src/presentation/cubit/remote_cubit.dart';
-import 'package:bincang_visual_flutter/src/presentation/cubit/signaling_cubit.dart';
 import 'package:bincang_visual_flutter/src/presentation/widgets/custom_snackbar.dart';
 import 'package:bincang_visual_flutter/src/presentation/widgets/custom_text_button.dart';
 import 'package:bincang_visual_flutter/utils/extension/context_extension.dart';
 import 'package:flutter/material.dart';
-import 'package:bincang_visual_flutter/di/dependency_injection.dart';
-import 'package:bincang_visual_flutter/src/presentation/widgets/custom_text_form_field.dart';
-import 'package:bincang_visual_flutter/utils/extension/widget_extension.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_webrtc/flutter_webrtc.dart';
 
@@ -15,27 +11,16 @@ import '../../utils/theme/app_colors.dart';
 import '../../utils/theme/app_text_style.dart';
 import 'call_page.dart';
 
-class PreviewPage extends StatelessWidget {
+class PreviewPage extends StatefulWidget {
   final String roomId;
 
   const PreviewPage({super.key, required this.roomId});
 
   @override
-  Widget build(BuildContext context) {
-    return PreviewPageUI(roomId: roomId);
-  }
+  State<PreviewPage> createState() => _PreviewPageState();
 }
 
-class PreviewPageUI extends StatefulWidget {
-  final String roomId;
-
-  const PreviewPageUI({super.key, required this.roomId});
-
-  @override
-  State<PreviewPageUI> createState() => _PreviewPageUIState();
-}
-
-class _PreviewPageUIState extends State<PreviewPageUI> {
+class _PreviewPageState extends State<PreviewPage> {
   TextEditingController usernameController = TextEditingController();
   bool micEnabled = true;
   bool cameraEnabled = true;
@@ -59,9 +44,7 @@ class _PreviewPageUIState extends State<PreviewPageUI> {
   }
 
   Future<void> initializeRenderer() async {
-    // final signalingCubit = context.read<SignalingCubit>();
     await localRenderer.initialize();
-    // await signalingCubit.initLocalMedia();
   }
 
   Future<void> initLocalStream() async {
@@ -117,22 +100,22 @@ class _PreviewPageUIState extends State<PreviewPageUI> {
       children: [
         Expanded(
           child:
-              cameraEnabled
-                  ? ClipRRect(
-                    borderRadius: BorderRadius.circular(12),
-                    child: Container(
-                      color: Colors.grey,
-                      width: 400,
-                      height: 400,
-                      child: RTCVideoView(
-                        localRenderer,
-                        mirror: true,
-                        objectFit:
-                            RTCVideoViewObjectFit.RTCVideoViewObjectFitCover,
-                      ),
-                    ),
-                  )
-                  : Container(color: Colors.grey),
+          cameraEnabled
+              ? ClipRRect(
+            borderRadius: BorderRadius.circular(12),
+            child: Container(
+              color: Colors.grey,
+              width: 400,
+              height: 400,
+              child: RTCVideoView(
+                localRenderer,
+                mirror: true,
+                objectFit:
+                RTCVideoViewObjectFit.RTCVideoViewObjectFitCover,
+              ),
+            ),
+          )
+              : Container(color: Colors.grey),
         ),
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -198,7 +181,7 @@ class _PreviewPageUIState extends State<PreviewPageUI> {
                       localRenderer,
                       mirror: true,
                       objectFit:
-                          RTCVideoViewObjectFit.RTCVideoViewObjectFitCover,
+                      RTCVideoViewObjectFit.RTCVideoViewObjectFitCover,
                     ),
                   ),
                 ),
@@ -216,7 +199,7 @@ class _PreviewPageUIState extends State<PreviewPageUI> {
                   FloatingActionButton(
                     heroTag: 'mic',
                     backgroundColor:
-                        micEnabled ? AppColors.secondaryColor : Colors.red,
+                    micEnabled ? AppColors.secondaryColor : Colors.red,
                     onPressed: toggleMic,
                     child: Icon(
                       micEnabled ? Icons.mic : Icons.mic_off,
@@ -227,7 +210,7 @@ class _PreviewPageUIState extends State<PreviewPageUI> {
                   FloatingActionButton(
                     heroTag: 'camera',
                     backgroundColor:
-                        cameraEnabled ? AppColors.secondaryColor : Colors.red,
+                    cameraEnabled ? AppColors.secondaryColor : Colors.red,
                     onPressed: toggleCamera,
                     child: Icon(
                       cameraEnabled ? Icons.videocam : Icons.videocam_off,
@@ -303,58 +286,11 @@ class _PreviewPageUIState extends State<PreviewPageUI> {
         },
         listenWhen:
             (previous, current) =>
-                previous.user != current.user &&
-                previous.coturnConfigurationModel !=
-                    current.coturnConfigurationModel,
+        previous.user != current.user &&
+            previous.coturnConfigurationModel !=
+                current.coturnConfigurationModel,
         child: context.isPhone() ? phoneView() : tabletView(),
       ),
     );
   }
-
-  // @override
-  // Widget build(BuildContext context) {
-  //   return Scaffold(
-  //     appBar: AppBar(title: Text("WebRTC Testing")),
-  //     body: BlocListener<RemoteCubit, RemoteState>(
-  //       listener: (context, state) {
-  //         if (state.user != null) {
-  //           Navigator.push(
-  //             context,
-  //             MaterialPageRoute(
-  //               builder:
-  //                   (context) =>
-  //                       CallPage(roomId: widget.roomId, user: state.user!),
-  //             ),
-  //           );
-  //         }
-  //       },
-  //       listenWhen: (previous, current) => previous != current,
-  //       child: BlocBuilder<RemoteCubit, RemoteState>(
-  //         builder: (context, state) {
-  //           return Center(
-  //             child: Padding(
-  //               padding: const EdgeInsets.symmetric(horizontal: 24),
-  //               child: Column(
-  //                 mainAxisAlignment: MainAxisAlignment.center,
-  //                 children: [
-  //                   CustomTextFormField(
-  //                     controller: usernameController,
-  //                     hintText: "Username",
-  //                   ).bottomMargin(16),
-  //                   if (errMessage.isNotEmpty) Text(errMessage).bottomMargin(8),
-  //                   state.isLoading
-  //                       ? CircularProgressIndicator()
-  //                       : CustomTextButton(
-  //                         onPressed: registerUser,
-  //                         child: Text("Masuk"),
-  //                       ),
-  //                 ],
-  //               ),
-  //             ),
-  //           );
-  //         },
-  //       ),
-  //     ),
-  //   );
-  // }
 }

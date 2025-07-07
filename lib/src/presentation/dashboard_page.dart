@@ -126,18 +126,24 @@ class _DashboardPageUIState extends State<DashboardPageUI> {
     );
   }
 
-  void joinHandler() {
+  Future<void> joinHandler() async {
     if (invitationCode.text.isEmpty) {
-      CustomSnackBar(
-        context: context,
-        message: "Invitation code is empty",
-      );
+      CustomSnackBar(context: context, message: "Invitation code is empty");
       return;
     }
-    context.push(PreviewPage(roomId: invitationCode.text));
+
+    context.read<RemoteCubit>().checkRoom(invitationCode.text).then((isAvailable) {
+      if (isAvailable) {
+        context.push(PreviewPage(roomId: invitationCode.text));
+        invitationCode.clear();
+      } else {
+        CustomSnackBar(context: context, message: "Room not found");
+      }
+    });
   }
 
   Widget body() {
+    //YVV-EIV1-OM5
     Widget newMeetingOrJoin() {
       return BlocListener<RemoteCubit, RemoteState>(
         listener: (context, state) {
@@ -200,8 +206,8 @@ class _DashboardPageUIState extends State<DashboardPageUI> {
                       CustomTextFormField(
                         controller: invitationCode,
                         hintText: "Enter the code",
-                        onFieldSubmitted: (value){
-                          joinHandler();
+                        onFieldSubmitted: (value) async {
+                          await joinHandler();
                         },
                         prefixIcon: Icon(
                           Icons.keyboard,
@@ -210,7 +216,9 @@ class _DashboardPageUIState extends State<DashboardPageUI> {
                       ),
                       SizedBox(height: 10),
                       TextButton(
-                        onPressed: joinHandler,
+                        onPressed: () async {
+                          await joinHandler();
+                        },
                         child: Text(
                           "Join",
                           style: AppTextStyle.bodyMedium.copyWith(),
@@ -252,8 +260,8 @@ class _DashboardPageUIState extends State<DashboardPageUI> {
                         child: CustomTextFormField(
                           controller: invitationCode,
                           hintText: "Enter the code",
-                          onFieldSubmitted: (value){
-                            joinHandler();
+                          onFieldSubmitted: (value) async {
+                            await joinHandler();
                           },
                           prefixIcon: Icon(
                             Icons.keyboard,
@@ -263,7 +271,9 @@ class _DashboardPageUIState extends State<DashboardPageUI> {
                       ),
                       SizedBox(width: 10),
                       TextButton(
-                        onPressed: joinHandler,
+                        onPressed: () async {
+                          await joinHandler();
+                        },
                         child: Text(
                           "Join",
                           style: AppTextStyle.bodyMedium.copyWith(),
@@ -278,8 +288,6 @@ class _DashboardPageUIState extends State<DashboardPageUI> {
         ),
       );
     }
-
-
 
     Widget banner() {
       return BlocBuilder<BannerCubit, BannerState>(
@@ -340,22 +348,26 @@ class _DashboardPageUIState extends State<DashboardPageUI> {
         height: context.height(),
         margin: EdgeInsets.symmetric(horizontal: 24),
         child:
-        context.isPhone()
-            ? newMeetingOrJoin()
-            : Row(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-          children: [
-            Expanded(child: newMeetingOrJoin()),
-            Expanded(child: banner()),
-          ],
-        ),
+            context.isPhone()
+                ? newMeetingOrJoin()
+                : Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [
+                    Expanded(child: newMeetingOrJoin()),
+                    Expanded(child: banner()),
+                  ],
+                ),
       ),
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(appBar: appBar(), body: body(), resizeToAvoidBottomInset: false);
+    return Scaffold(
+      appBar: appBar(),
+      body: body(),
+      resizeToAvoidBottomInset: false,
+    );
   }
 }

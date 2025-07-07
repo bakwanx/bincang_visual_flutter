@@ -5,6 +5,7 @@ import 'package:bincang_visual_flutter/src/data/models/ping_payload_model.dart';
 import 'package:bincang_visual_flutter/src/data/models/user_model.dart';
 import 'package:bincang_visual_flutter/src/domain/entities/call_entity.dart';
 import 'package:bincang_visual_flutter/src/domain/usecase/signaling_usecase.dart';
+import 'package:bincang_visual_flutter/utils/log/print_debug_log.dart';
 import 'package:bincang_visual_flutter/utils/theme/app_toast.dart';
 import 'package:bloc/bloc.dart';
 import 'package:flutter/cupertino.dart';
@@ -19,7 +20,7 @@ import '../../data/models/websocket_message_model.dart';
 
 part 'signaling_cubit.freezed.dart';
 part 'signaling_state.dart';
-
+final _tag = "signaling";
 class SignalingCubit extends Cubit<SignalingState> {
   final SignalingUseCase signalingUseCase;
   final WebSocketService webSocketService;
@@ -55,10 +56,11 @@ class SignalingCubit extends Cubit<SignalingState> {
     signalingUseCase.onMessage.listen((message) {
       switch (message.type) {
         case "pingpong":
-          final requestOfferring = PingPongPayloadModel.fromJson(
+          final data = PingPongPayloadModel.fromJson(
             message.payload,
           );
-          debugPrint('==== receive a ping: ${requestOfferring.toJson()}');
+          printDebugLog(tag: _tag, message: "receive ping: ${data.message}");
+          debugPrint('==== receive a ping ====');
           _pingPong();
           break;
         case "join":
@@ -66,19 +68,19 @@ class SignalingCubit extends Cubit<SignalingState> {
             message.payload,
           );
           // // send offer
-          debugPrint('==== receive a request join: ${requestOfferring.toJson()}');
+          printDebugLog(tag: _tag, message: "receive a request join: ${requestOfferring.toJson()}");
           offerSdp(requestOfferring);
           break;
         case "offer":
           // // answer the offer
           final sdpPayload = SdpPayloadModel.fromJson(message.payload);
-          debugPrint('==== receive offer: ${sdpPayload.toJson()}');
+          printDebugLog(tag: _tag, message: "receive an offer: ${sdpPayload.toJson()}");
           sendAnswerSdp(sdpPayload);
           setRemoteSdp(sdpPayload.userFrom, sdpPayload);
           break;
         case "answer":
           final sdpPayload = SdpPayloadModel.fromJson(message.payload);
-          debugPrint('==== receive answer: ${sdpPayload.toJson()}');
+          printDebugLog(tag: _tag, message: "receive an answer: ${sdpPayload.toJson()}");
           // // set answer
           setRemoteSdp(sdpPayload.userFrom, sdpPayload);
           break;
@@ -86,17 +88,17 @@ class SignalingCubit extends Cubit<SignalingState> {
           final iceCandidate = IceCandidatePayloadModel.fromJson(
             message.payload,
           );
-          debugPrint('==== receive candidate: ${iceCandidate.toJson()}');
+          printDebugLog(tag: _tag, message: "receive a candidate: ${iceCandidate.toJson()}");
           collectIceCandidates(iceCandidate);
           break;
         case 'chat':
           final chatPayloadModel = ChatPayloadModel.fromJson(message.payload);
-          debugPrint('==== receive chat message: ${chatPayloadModel.toJson()}');
+          printDebugLog(tag: _tag, message: "receive a chat message: ${chatPayloadModel.toJson()}");
           receiveChat(chatPayloadModel);
           break;
         case 'leave':
           final leavePayloadModel = LeavePayloadModel.fromJson(message.payload);
-          debugPrint('==== receive leave message: ${leavePayloadModel.toJson()}');
+          printDebugLog(tag: _tag, message: "receive a leave message: ${leavePayloadModel.toJson()}");
           AppToast.showToast(
             message: "${leavePayloadModel.user.username} has left the meeting",
           );
@@ -192,7 +194,7 @@ class SignalingCubit extends Cubit<SignalingState> {
     );
 
     pc.onTrack = (RTCTrackEvent event) {
-      debugPrint('Got remote track: ${event.streams[0]}');
+      printDebugLog(tag: _tag, message: "Got remote track: ${event.streams[0]}");
       final stream = event.streams.isNotEmpty ? event.streams[0] : null;
       if (stream != null && !state.remoteStream.containsKey(remoteUserId)) {
         emit(
@@ -314,7 +316,7 @@ class SignalingCubit extends Cubit<SignalingState> {
     try {
       track.stop();
     } catch (e) {
-      debugPrint(e.toString());
+      printDebugLog(tag: _tag, message: "Got remote track: $e");
     }
   }
 
@@ -419,7 +421,7 @@ class SignalingCubit extends Cubit<SignalingState> {
     final pc = state.peerConnection[username];
     final localStream = state.localStream;
     pc?.onIceGatheringState = (RTCIceGatheringState state) {
-      debugPrint('ICE gathering state changed: $state');
+      printDebugLog(tag: _tag, message: "ICE gathering state changed: $state");
     };
 
     pc?.onConnectionState = (RTCPeerConnectionState state) {
