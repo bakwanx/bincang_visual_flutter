@@ -1,7 +1,6 @@
 import 'package:bincang_visual_flutter/src/presentation/cubit/banner_cubit.dart';
 import 'package:bincang_visual_flutter/src/presentation/preview_page.dart';
 import 'package:bincang_visual_flutter/src/presentation/widgets/banner_item.dart';
-import 'package:bincang_visual_flutter/src/presentation/widgets/base_dialog.dart';
 import 'package:bincang_visual_flutter/src/presentation/widgets/custom_snackbar.dart';
 import 'package:bincang_visual_flutter/src/presentation/widgets/custom_text_button.dart';
 import 'package:bincang_visual_flutter/src/presentation/widgets/custom_text_form_field.dart';
@@ -143,7 +142,6 @@ class _DashboardPageUIState extends State<DashboardPageUI> {
   }
 
   Widget body() {
-    //YVV-EIV1-OM5
     Widget newMeetingOrJoin() {
       return BlocListener<RemoteCubit, RemoteState>(
         listener: (context, state) {

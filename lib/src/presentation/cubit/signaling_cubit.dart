@@ -1,7 +1,9 @@
 import 'package:bincang_visual_flutter/src/data/models/chat_payload_model.dart';
 import 'package:bincang_visual_flutter/src/data/models/coturn_configuration_model.dart';
 import 'package:bincang_visual_flutter/src/data/models/leave_payload_model.dart';
+import 'package:bincang_visual_flutter/src/data/models/media_stream_model.dart';
 import 'package:bincang_visual_flutter/src/data/models/ping_payload_model.dart';
+import 'package:bincang_visual_flutter/src/data/models/rtc_peer_connection_model.dart';
 import 'package:bincang_visual_flutter/src/data/models/user_model.dart';
 import 'package:bincang_visual_flutter/src/domain/entities/call_entity.dart';
 import 'package:bincang_visual_flutter/src/domain/usecase/signaling_usecase.dart';
@@ -19,8 +21,11 @@ import '../../data/models/sdp_payload_model.dart';
 import '../../data/models/websocket_message_model.dart';
 
 part 'signaling_cubit.freezed.dart';
+
 part 'signaling_state.dart';
+
 final _tag = "signaling";
+
 class SignalingCubit extends Cubit<SignalingState> {
   final SignalingUseCase signalingUseCase;
   final WebSocketService webSocketService;
@@ -31,6 +36,7 @@ class SignalingCubit extends Cubit<SignalingState> {
   }) : super(SignalingState());
 
   void init({required CallEntity callEntity}) {
+    callEntity.user.isCastingScreen = state.isCasting;
     emit(
       state.copyWith(
         user: callEntity.user,
@@ -56,9 +62,7 @@ class SignalingCubit extends Cubit<SignalingState> {
     signalingUseCase.onMessage.listen((message) {
       switch (message.type) {
         case "pingpong":
-          final data = PingPongPayloadModel.fromJson(
-            message.payload,
-          );
+          final data = PingPongPayloadModel.fromJson(message.payload);
           printDebugLog(tag: _tag, message: "receive ping: ${data.message}");
           debugPrint('==== receive a ping ====');
           _pingPong();
@@ -68,19 +72,28 @@ class SignalingCubit extends Cubit<SignalingState> {
             message.payload,
           );
           // // send offer
-          printDebugLog(tag: _tag, message: "receive a request join: ${requestOfferring.toJson()}");
+          printDebugLog(
+            tag: _tag,
+            message: "receive a request join: ${requestOfferring.toJson()}",
+          );
           offerSdp(requestOfferring);
           break;
         case "offer":
           // // answer the offer
           final sdpPayload = SdpPayloadModel.fromJson(message.payload);
-          printDebugLog(tag: _tag, message: "receive an offer: ${sdpPayload.toJson()}");
+          printDebugLog(
+            tag: _tag,
+            message: "receive an offer: ${sdpPayload.toJson()}",
+          );
           sendAnswerSdp(sdpPayload);
           setRemoteSdp(sdpPayload.userFrom, sdpPayload);
           break;
         case "answer":
           final sdpPayload = SdpPayloadModel.fromJson(message.payload);
-          printDebugLog(tag: _tag, message: "receive an answer: ${sdpPayload.toJson()}");
+          printDebugLog(
+            tag: _tag,
+            message: "receive an answer: ${sdpPayload.toJson()}",
+          );
           // // set answer
           setRemoteSdp(sdpPayload.userFrom, sdpPayload);
           break;
@@ -88,17 +101,26 @@ class SignalingCubit extends Cubit<SignalingState> {
           final iceCandidate = IceCandidatePayloadModel.fromJson(
             message.payload,
           );
-          printDebugLog(tag: _tag, message: "receive a candidate: ${iceCandidate.toJson()}");
+          printDebugLog(
+            tag: _tag,
+            message: "receive a candidate: ${iceCandidate.toJson()}",
+          );
           collectIceCandidates(iceCandidate);
           break;
         case 'chat':
           final chatPayloadModel = ChatPayloadModel.fromJson(message.payload);
-          printDebugLog(tag: _tag, message: "receive a chat message: ${chatPayloadModel.toJson()}");
+          printDebugLog(
+            tag: _tag,
+            message: "receive a chat message: ${chatPayloadModel.toJson()}",
+          );
           receiveChat(chatPayloadModel);
           break;
         case 'leave':
           final leavePayloadModel = LeavePayloadModel.fromJson(message.payload);
-          printDebugLog(tag: _tag, message: "receive a leave message: ${leavePayloadModel.toJson()}");
+          printDebugLog(
+            tag: _tag,
+            message: "receive a leave message: ${leavePayloadModel.toJson()}",
+          );
           AppToast.showToast(
             message: "${leavePayloadModel.user.username} has left the meeting",
           );
@@ -129,6 +151,23 @@ class SignalingCubit extends Cubit<SignalingState> {
     );
   }
 
+  Future<void> shareScreen({required Function(bool) onShareScreen}) async {
+    for (final pc in state.peerConnection.values) {
+      if (pc.userModel.isCastingScreen) {
+        onShareScreen(false);
+        return;
+      }
+    }
+
+    final userModel = state.user;
+    userModel?.isCastingScreen = true;
+
+    emit(state.copyWith(user: userModel));
+
+    requestOffer();
+    onShareScreen(true);
+  }
+
   Future<void> offerSdp(RequestOfferingModel req) async {
     RTCPeerConnection pc = await createPeerConnection(
       state.coturnConfiguration!.toJson(),
@@ -141,7 +180,13 @@ class SignalingCubit extends Cubit<SignalingState> {
           !state.remoteStream.containsKey(req.userRequest.id)) {
         emit(
           state.copyWith(
-            remoteStream: {...state.remoteStream, req.userRequest.id: stream},
+            remoteStream: {
+              ...state.remoteStream,
+              req.userRequest.id: MediaStreamModel(
+                mediaStream: stream,
+                userModel: req.userRequest,
+              ),
+            },
           ),
         );
       }
@@ -149,7 +194,13 @@ class SignalingCubit extends Cubit<SignalingState> {
 
     emit(
       state.copyWith(
-        peerConnection: {...state.peerConnection, req.userRequest.id: pc},
+        peerConnection: {
+          ...state.peerConnection,
+          req.userRequest.id: RtcPeerConnectionModel(
+            peerConnection: pc,
+            userModel: req.userRequest,
+          ),
+        },
       ),
     );
 
@@ -194,12 +245,21 @@ class SignalingCubit extends Cubit<SignalingState> {
     );
 
     pc.onTrack = (RTCTrackEvent event) {
-      printDebugLog(tag: _tag, message: "Got remote track: ${event.streams[0]}");
+      printDebugLog(
+        tag: _tag,
+        message: "Got remote track: ${event.streams[0]}",
+      );
       final stream = event.streams.isNotEmpty ? event.streams[0] : null;
       if (stream != null && !state.remoteStream.containsKey(remoteUserId)) {
         emit(
           state.copyWith(
-            remoteStream: {...state.remoteStream, remoteUserId: stream},
+            remoteStream: {
+              ...state.remoteStream,
+              remoteUserId: MediaStreamModel(
+                mediaStream: stream,
+                userModel: remoteUser,
+              ),
+            },
           ),
         );
       }
@@ -207,7 +267,13 @@ class SignalingCubit extends Cubit<SignalingState> {
 
     emit(
       state.copyWith(
-        peerConnection: {...state.peerConnection, remoteUserId: pc},
+        peerConnection: {
+          ...state.peerConnection,
+          remoteUserId: RtcPeerConnectionModel(
+            peerConnection: pc,
+            userModel: remoteUser,
+          ),
+        },
       ),
     );
 
@@ -254,7 +320,8 @@ class SignalingCubit extends Cubit<SignalingState> {
       sdpPayload.sdp,
       sdpPayload.typeSdp,
     );
-    await state.peerConnection[userModel.id]?.setRemoteDescription(description);
+    await state.peerConnection[userModel.id]?.peerConnection
+        .setRemoteDescription(description);
 
     // await peerConnection[username]?.setRemoteDescription(description);
   }
@@ -289,7 +356,7 @@ class SignalingCubit extends Cubit<SignalingState> {
     // state.iceCandidates.putIfAbsent(fromUser, () => []);
     final newListCandidates = state.iceCandidates[fromUser] ?? [];
     newListCandidates.add(iceCandidate);
-    final peerAddCandidate = state.peerConnection[fromUser];
+    final peerAddCandidate = state.peerConnection[fromUser]?.peerConnection;
     if (peerAddCandidate != null) {
       peerAddCandidate.addCandidate(
         RTCIceCandidate(
@@ -300,7 +367,13 @@ class SignalingCubit extends Cubit<SignalingState> {
       );
       emit(
         state.copyWith(
-          peerConnection: {...state.peerConnection, fromUser: peerAddCandidate},
+          peerConnection: {
+            ...state.peerConnection,
+            fromUser: RtcPeerConnectionModel(
+              peerConnection: peerAddCandidate,
+              userModel: iceCandidate.userFrom,
+            ),
+          },
         ),
       );
     }
@@ -328,11 +401,11 @@ class SignalingCubit extends Cubit<SignalingState> {
       ),
     );
     for (final pc in state.peerConnection.values) {
-      pc.close();
+      pc.peerConnection.close();
     }
 
     for (final stream in state.remoteStream.values) {
-      stream.getTracks().forEach((t) => t.stop());
+      stream.mediaStream.getTracks().forEach((t) => t.stop());
     }
 
     // Clean up local stream
@@ -354,7 +427,7 @@ class SignalingCubit extends Cubit<SignalingState> {
 
   Future<void> reconnect() async {
     for (final pc in state.peerConnection.values) {
-      pc.close();
+      pc.peerConnection.close();
     }
     emit(state.copyWith(peerConnection: {}, iceCandidates: {}));
 
@@ -363,16 +436,16 @@ class SignalingCubit extends Cubit<SignalingState> {
 
   void removeRemoteUserConnection(LeavePayloadModel leavePayloadModel) {
     final remoteUser = leavePayloadModel.user.id;
-    final remoteStreams = Map<String, MediaStream>.from(state.remoteStream);
+    final remoteStreams = Map<String, MediaStreamModel>.from(state.remoteStream);
     final iceCandidates = Map<String, List<IceCandidatePayloadModel>>.from(
       state.iceCandidates,
     );
-    final peerConnections = Map<String, RTCPeerConnection>.from(
+    final peerConnections = Map<String, RtcPeerConnectionModel>.from(
       state.peerConnection,
     );
 
-    peerConnections[remoteUser]?.close();
-    remoteStreams[remoteUser]?.getTracks().forEach((t) => t.stop());
+    peerConnections[remoteUser]?.peerConnection.close();
+    remoteStreams[remoteUser]?.mediaStream.getTracks().forEach((t) => t.stop());
 
     remoteStreams.remove(leavePayloadModel.user.id);
     iceCandidates.remove(leavePayloadModel.user.id);
@@ -420,11 +493,11 @@ class SignalingCubit extends Cubit<SignalingState> {
   void registerPeerConnectionListeners(String username) {
     final pc = state.peerConnection[username];
     final localStream = state.localStream;
-    pc?.onIceGatheringState = (RTCIceGatheringState state) {
+    pc?.peerConnection.onIceGatheringState = (RTCIceGatheringState state) {
       printDebugLog(tag: _tag, message: "ICE gathering state changed: $state");
     };
 
-    pc?.onConnectionState = (RTCPeerConnectionState state) {
+    pc?.peerConnection.onConnectionState = (RTCPeerConnectionState state) {
       if (localStream != null &&
               state ==
                   RTCPeerConnectionState.RTCPeerConnectionStateDisconnected ||
@@ -435,11 +508,11 @@ class SignalingCubit extends Cubit<SignalingState> {
       debugPrint('Connection state change: $state');
     };
 
-    pc?.onSignalingState = (RTCSignalingState state) {
+    pc?.peerConnection.onSignalingState = (RTCSignalingState state) {
       debugPrint('Signaling state change: $state');
     };
 
-    pc?.onIceGatheringState = (RTCIceGatheringState state) {
+    pc?.peerConnection.onIceGatheringState = (RTCIceGatheringState state) {
       debugPrint('ICE connection state change: $state');
     };
 
@@ -457,19 +530,12 @@ class SignalingCubit extends Cubit<SignalingState> {
       message: message,
     );
     signalingUseCase.sendMessage(
-      WebSocketMessageModel(
-        type: "chat",
-        payload: chat,
-      ),
+      WebSocketMessageModel(type: "chat", payload: chat),
     );
-    emit(state.copyWith(
-        chat: [...state.chat, chat]
-    ));
+    emit(state.copyWith(chat: [...state.chat, chat]));
   }
 
   Future<void> receiveChat(ChatPayloadModel chat) async {
-    emit(state.copyWith(
-      chat: [...state.chat, chat]
-    ));
+    emit(state.copyWith(chat: [...state.chat, chat]));
   }
 }

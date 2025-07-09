@@ -1,3 +1,4 @@
+import 'package:bincang_visual_flutter/src/data/models/rtc_video_renderer_model.dart';
 import 'package:bincang_visual_flutter/src/domain/entities/call_entity.dart';
 import 'package:bincang_visual_flutter/src/presentation/cubit/signaling_cubit.dart';
 import 'package:bincang_visual_flutter/src/presentation/dashboard_page.dart';
@@ -8,6 +9,7 @@ import 'package:flutter_webrtc/flutter_webrtc.dart';
 
 import '../../../di/dependency_injection.dart';
 import '../../utils/theme/app_colors.dart';
+import '../data/models/user_model.dart';
 
 class CallPage extends StatelessWidget {
   final CallEntity callEntity;
@@ -39,7 +41,7 @@ class _CallPageUIState extends State<CallPageUI> {
   bool cameraEnabled = true;
 
   final RTCVideoRenderer localRenderer = RTCVideoRenderer();
-  final Map<String, RTCVideoRenderer> remoteRenderers = {};
+  final Map<String, RtcVideoRendererModel> remoteRenderers = {};
   bool _isChatVisible = false;
   final Duration _animationDuration = Duration(milliseconds: 300);
 
@@ -111,8 +113,8 @@ class _CallPageUIState extends State<CallPageUI> {
   void leaveRoom() {
     context.read<SignalingCubit>().leave();
     for (final renderer in remoteRenderers.values) {
-      renderer.srcObject = null;
-      renderer.dispose();
+      renderer.rtcVideoRenderer.srcObject = null;
+      renderer.rtcVideoRenderer.dispose();
     }
     localRenderer.srcObject = null;
     remoteRenderers.clear();
@@ -132,11 +134,63 @@ class _CallPageUIState extends State<CallPageUI> {
         const double minTileWidth = 200;
         const double minTileHeight = 200;
 
+        final screenShareEntry = remoteRenderers.entries.firstWhere(
+              (entry) => entry.value.userModel.isCastingScreen,
+          orElse: () => MapEntry(
+            "__dummy__",
+            RtcVideoRendererModel(
+              rtcVideoRenderer: RTCVideoRenderer(),
+              userModel: UserModel(
+                id: '',
+                username: '',
+                isCastingScreen: false,
+              ),
+            ),
+          ),
+        );
+
+        if (screenShareEntry.value.userModel.isCastingScreen) {
+          return Stack(
+            children: [
+              // 👨‍💻 Fullscreen screen share
+              _buildFullScreenParticipant(
+                screenShareEntry.value.userModel.username,
+                screenShareEntry.value.rtcVideoRenderer,
+                false,
+              ),
+
+              // 📱 Overlay all other participants in a grid or list
+              Align(
+                alignment: Alignment.bottomRight,
+                child: SizedBox(
+                  height: screenHeight * 0.25,
+                  width: screenWidth * 0.35,
+                  child: ListView(
+                    scrollDirection: Axis.horizontal,
+                    children: remoteRenderers.entries
+                        .where((entry) => entry.key != screenShareEntry.key)
+                        .map((entry) {
+                      return SizedBox(
+                        width: 120,
+                        height: 160,
+                        child: _buildParticipantTile(
+                          entry.value.userModel.username,
+                          entry.value.rtcVideoRenderer,
+                        ),
+                      );
+                    }).toList(),
+                  ),
+                ),
+              ),
+            ],
+          );
+        }
+
         if (remoteRenderers.entries.length <= 2) {
           return remoteRenderers.entries.length == 1
               ? _buildFullScreenParticipant(
-                remoteRenderers.entries.first.key,
-                remoteRenderers.entries.first.value,
+                remoteRenderers.entries.first.value.userModel.username,
+                remoteRenderers.entries.first.value.rtcVideoRenderer,
                 false,
               )
               : (isPortrait
@@ -145,8 +199,8 @@ class _CallPageUIState extends State<CallPageUI> {
                         remoteRenderers.entries.map((entry) {
                           return Expanded(
                             child: _buildParticipantTile(
-                              entry.key,
-                              entry.value,
+                              entry.value.userModel.username,
+                              entry.value.rtcVideoRenderer,
                             ),
                           );
                         }).toList(),
@@ -156,8 +210,8 @@ class _CallPageUIState extends State<CallPageUI> {
                         remoteRenderers.entries.map((entry) {
                           return Expanded(
                             child: _buildParticipantTile(
-                              entry.key,
-                              entry.value,
+                              entry.value.userModel.username,
+                              entry.value.rtcVideoRenderer,
                             ),
                           );
                         }).toList(),
@@ -179,7 +233,7 @@ class _CallPageUIState extends State<CallPageUI> {
                   return SizedBox(
                     width: tileWidth - 8,
                     height: tileHeight - 8,
-                    child: _buildParticipantTile(entry.key, entry.value),
+                    child: _buildParticipantTile(entry.value.userModel.username, entry.value.rtcVideoRenderer),
                   );
                 }).toList(),
           );
@@ -200,7 +254,7 @@ class _CallPageUIState extends State<CallPageUI> {
               // // final isActive = participant.key == widget.activeSpeakerId;
               // final isActive = false;
               final participant = remoteRenderers.entries.elementAt(index);
-              return _buildParticipantTile(participant.key, participant.value);
+              return _buildParticipantTile(participant.value.userModel.username, participant.value.rtcVideoRenderer);
             },
           );
         }
@@ -209,7 +263,7 @@ class _CallPageUIState extends State<CallPageUI> {
   }
 
   Widget _buildFullScreenParticipant(
-    String id,
+    String username,
     RTCVideoRenderer renderer,
     bool isActive,
   ) {
@@ -243,7 +297,7 @@ class _CallPageUIState extends State<CallPageUI> {
                   borderRadius: BorderRadius.circular(6),
                 ),
                 child: Text(
-                  id,
+                  username,
                   style: const TextStyle(color: Colors.white, fontSize: 12),
                 ),
               ),
@@ -254,7 +308,7 @@ class _CallPageUIState extends State<CallPageUI> {
     );
   }
 
-  Widget _buildParticipantTile(String id, RTCVideoRenderer renderer) {
+  Widget _buildParticipantTile(String username, RTCVideoRenderer renderer) {
     return Padding(
       padding: const EdgeInsets.all(8.0),
       child: ClipRRect(
@@ -278,7 +332,7 @@ class _CallPageUIState extends State<CallPageUI> {
                   borderRadius: BorderRadius.circular(6),
                 ),
                 child: Text(
-                  id,
+                  username,
                   style: const TextStyle(color: Colors.white, fontSize: 10),
                 ),
               ),
@@ -302,30 +356,34 @@ class _CallPageUIState extends State<CallPageUI> {
         automaticallyImplyLeading: false,
       ),
       body: BlocListener<SignalingCubit, SignalingState>(
-        listenWhen:
-            (previous, current) =>
-                previous.remoteStream != current.remoteStream,
+        listenWhen: (previous, current) => previous.remoteStream != current.remoteStream,
         listener: (context, state) {
           // Loop through the updated remote streams
-          state.remoteStream.forEach((key, stream) {
+          state.remoteStream.forEach((key, stream) async {
             if (!remoteRenderers.containsKey(key)) {
               final renderer = RTCVideoRenderer();
-              renderer.initialize().then((_) {
-                renderer.srcObject = stream;
-                setState(() {
-                  remoteRenderers[key] = renderer;
-                });
+              await renderer.initialize();
+              renderer.srcObject = stream.mediaStream;
+
+              setState(() {
+                remoteRenderers[key] = RtcVideoRendererModel(
+                  rtcVideoRenderer: renderer,
+                  userModel: stream.userModel,
+                );
               });
             } else {
               // Update existing renderer with the new stream
-              remoteRenderers[key]?.srcObject = stream;
+              setState(() {
+                remoteRenderers[key]?.rtcVideoRenderer.srcObject = stream.mediaStream;
+              });
+
             }
           });
 
           // Remove remote users who left
           remoteRenderers.forEach((key, renderer) {
             if (!state.remoteStream.containsKey(key)) {
-              renderer.srcObject = null; // Clean up the stream if user leaves
+              renderer.rtcVideoRenderer.srcObject = null; // Clean up the stream if user leaves
               remoteRenderers.remove(key);
             }
           });

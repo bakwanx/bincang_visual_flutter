@@ -11,9 +11,10 @@ sealed class SignalingState with _$SignalingState{
     @Default('') String roomId,
     @Default([]) List<ChatPayloadModel> chat,
     @Default({}) Map<String, List<IceCandidatePayloadModel>> iceCandidates,
-    @Default({}) Map<String, MediaStream> remoteStream,
-    @Default({}) Map<String, RTCPeerConnection> peerConnection,
+    @Default({}) Map<String, MediaStreamModel> remoteStream,
+    @Default({}) Map<String, RtcPeerConnectionModel> peerConnection,
     @Default('') String toastMessage,
+    @Default(false) bool isCasting,
     CoturnConfigurationModel? coturnConfiguration,
     MediaStream? localStream,
   }) = _SignalingState;
