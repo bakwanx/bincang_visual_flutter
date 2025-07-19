@@ -18,7 +18,7 @@ class RemoteCubit extends Cubit<RemoteState> {
 
   final RemoteUseCase remoteUseCase;
 
-  Future<void> registerUser(String username) async {
+  Future<void> registerUser(String username, { Function(UserModel user)? onSuccess }) async {
     emit(state.copyWith(isLoading: true));
     final result = await remoteUseCase.registerUser(username);
     final config = await remoteUseCase.getConfiguration();
@@ -31,6 +31,7 @@ class RemoteCubit extends Cubit<RemoteState> {
         emit(state.copyWith(exception: l, isLoading: false, user: null));
       },
       (r) {
+        onSuccess!(r);
         userModel = r;
       },
     );

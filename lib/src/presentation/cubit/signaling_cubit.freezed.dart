@@ -15,7 +15,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$SignalingState {
 
- int get currentBanner; UserModel? get user; String get roomId; List<ChatPayloadModel> get chat; Map<String, List<IceCandidatePayloadModel>> get iceCandidates; Map<String, MediaStreamModel> get remoteStream; Map<String, RtcPeerConnectionModel> get peerConnection; String get toastMessage; bool get isCasting; CoturnConfigurationModel? get coturnConfiguration; MediaStream? get localStream;
+ int get currentBanner; Map<String, UserModel> get user; String get roomId; List<ChatPayloadModel> get chat; Map<String, List<IceCandidatePayloadModel>> get iceCandidates; Map<String, MediaStreamModel> get remoteStream; Map<String, RtcPeerConnectionModel> get peerConnection; String get toastMessage; bool get isCasting; CoturnConfigurationModel? get coturnConfiguration; Map<String, MediaStream> get localStream;
 /// Create a copy of SignalingState
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -26,12 +26,12 @@ $SignalingStateCopyWith<SignalingState> get copyWith => _$SignalingStateCopyWith
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is SignalingState&&(identical(other.currentBanner, currentBanner) || other.currentBanner == currentBanner)&&(identical(other.user, user) || other.user == user)&&(identical(other.roomId, roomId) || other.roomId == roomId)&&const DeepCollectionEquality().equals(other.chat, chat)&&const DeepCollectionEquality().equals(other.iceCandidates, iceCandidates)&&const DeepCollectionEquality().equals(other.remoteStream, remoteStream)&&const DeepCollectionEquality().equals(other.peerConnection, peerConnection)&&(identical(other.toastMessage, toastMessage) || other.toastMessage == toastMessage)&&(identical(other.isCasting, isCasting) || other.isCasting == isCasting)&&(identical(other.coturnConfiguration, coturnConfiguration) || other.coturnConfiguration == coturnConfiguration)&&(identical(other.localStream, localStream) || other.localStream == localStream));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is SignalingState&&(identical(other.currentBanner, currentBanner) || other.currentBanner == currentBanner)&&const DeepCollectionEquality().equals(other.user, user)&&(identical(other.roomId, roomId) || other.roomId == roomId)&&const DeepCollectionEquality().equals(other.chat, chat)&&const DeepCollectionEquality().equals(other.iceCandidates, iceCandidates)&&const DeepCollectionEquality().equals(other.remoteStream, remoteStream)&&const DeepCollectionEquality().equals(other.peerConnection, peerConnection)&&(identical(other.toastMessage, toastMessage) || other.toastMessage == toastMessage)&&(identical(other.isCasting, isCasting) || other.isCasting == isCasting)&&(identical(other.coturnConfiguration, coturnConfiguration) || other.coturnConfiguration == coturnConfiguration)&&const DeepCollectionEquality().equals(other.localStream, localStream));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,currentBanner,user,roomId,const DeepCollectionEquality().hash(chat),const DeepCollectionEquality().hash(iceCandidates),const DeepCollectionEquality().hash(remoteStream),const DeepCollectionEquality().hash(peerConnection),toastMessage,isCasting,coturnConfiguration,localStream);
+int get hashCode => Object.hash(runtimeType,currentBanner,const DeepCollectionEquality().hash(user),roomId,const DeepCollectionEquality().hash(chat),const DeepCollectionEquality().hash(iceCandidates),const DeepCollectionEquality().hash(remoteStream),const DeepCollectionEquality().hash(peerConnection),toastMessage,isCasting,coturnConfiguration,const DeepCollectionEquality().hash(localStream));
 
 @override
 String toString() {
@@ -46,7 +46,7 @@ abstract mixin class $SignalingStateCopyWith<$Res>  {
   factory $SignalingStateCopyWith(SignalingState value, $Res Function(SignalingState) _then) = _$SignalingStateCopyWithImpl;
 @useResult
 $Res call({
- int currentBanner, UserModel? user, String roomId, List<ChatPayloadModel> chat, Map<String, List<IceCandidatePayloadModel>> iceCandidates, Map<String, MediaStreamModel> remoteStream, Map<String, RtcPeerConnectionModel> peerConnection, String toastMessage, bool isCasting, CoturnConfigurationModel? coturnConfiguration, MediaStream? localStream
+ int currentBanner, Map<String, UserModel> user, String roomId, List<ChatPayloadModel> chat, Map<String, List<IceCandidatePayloadModel>> iceCandidates, Map<String, MediaStreamModel> remoteStream, Map<String, RtcPeerConnectionModel> peerConnection, String toastMessage, bool isCasting, CoturnConfigurationModel? coturnConfiguration, Map<String, MediaStream> localStream
 });
 
 
@@ -63,11 +63,11 @@ class _$SignalingStateCopyWithImpl<$Res>
 
 /// Create a copy of SignalingState
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? currentBanner = null,Object? user = freezed,Object? roomId = null,Object? chat = null,Object? iceCandidates = null,Object? remoteStream = null,Object? peerConnection = null,Object? toastMessage = null,Object? isCasting = null,Object? coturnConfiguration = freezed,Object? localStream = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? currentBanner = null,Object? user = null,Object? roomId = null,Object? chat = null,Object? iceCandidates = null,Object? remoteStream = null,Object? peerConnection = null,Object? toastMessage = null,Object? isCasting = null,Object? coturnConfiguration = freezed,Object? localStream = null,}) {
   return _then(_self.copyWith(
 currentBanner: null == currentBanner ? _self.currentBanner : currentBanner // ignore: cast_nullable_to_non_nullable
-as int,user: freezed == user ? _self.user : user // ignore: cast_nullable_to_non_nullable
-as UserModel?,roomId: null == roomId ? _self.roomId : roomId // ignore: cast_nullable_to_non_nullable
+as int,user: null == user ? _self.user : user // ignore: cast_nullable_to_non_nullable
+as Map<String, UserModel>,roomId: null == roomId ? _self.roomId : roomId // ignore: cast_nullable_to_non_nullable
 as String,chat: null == chat ? _self.chat : chat // ignore: cast_nullable_to_non_nullable
 as List<ChatPayloadModel>,iceCandidates: null == iceCandidates ? _self.iceCandidates : iceCandidates // ignore: cast_nullable_to_non_nullable
 as Map<String, List<IceCandidatePayloadModel>>,remoteStream: null == remoteStream ? _self.remoteStream : remoteStream // ignore: cast_nullable_to_non_nullable
@@ -75,8 +75,8 @@ as Map<String, MediaStreamModel>,peerConnection: null == peerConnection ? _self.
 as Map<String, RtcPeerConnectionModel>,toastMessage: null == toastMessage ? _self.toastMessage : toastMessage // ignore: cast_nullable_to_non_nullable
 as String,isCasting: null == isCasting ? _self.isCasting : isCasting // ignore: cast_nullable_to_non_nullable
 as bool,coturnConfiguration: freezed == coturnConfiguration ? _self.coturnConfiguration : coturnConfiguration // ignore: cast_nullable_to_non_nullable
-as CoturnConfigurationModel?,localStream: freezed == localStream ? _self.localStream : localStream // ignore: cast_nullable_to_non_nullable
-as MediaStream?,
+as CoturnConfigurationModel?,localStream: null == localStream ? _self.localStream : localStream // ignore: cast_nullable_to_non_nullable
+as Map<String, MediaStream>,
   ));
 }
 
@@ -87,11 +87,17 @@ as MediaStream?,
 
 
 class _SignalingState extends SignalingState {
-   _SignalingState({this.currentBanner = 0, this.user, this.roomId = '', final  List<ChatPayloadModel> chat = const [], final  Map<String, List<IceCandidatePayloadModel>> iceCandidates = const {}, final  Map<String, MediaStreamModel> remoteStream = const {}, final  Map<String, RtcPeerConnectionModel> peerConnection = const {}, this.toastMessage = '', this.isCasting = false, this.coturnConfiguration, this.localStream}): _chat = chat,_iceCandidates = iceCandidates,_remoteStream = remoteStream,_peerConnection = peerConnection,super._();
+   _SignalingState({this.currentBanner = 0, final  Map<String, UserModel> user = const {}, this.roomId = '', final  List<ChatPayloadModel> chat = const [], final  Map<String, List<IceCandidatePayloadModel>> iceCandidates = const {}, final  Map<String, MediaStreamModel> remoteStream = const {}, final  Map<String, RtcPeerConnectionModel> peerConnection = const {}, this.toastMessage = '', this.isCasting = false, this.coturnConfiguration, final  Map<String, MediaStream> localStream = const {}}): _user = user,_chat = chat,_iceCandidates = iceCandidates,_remoteStream = remoteStream,_peerConnection = peerConnection,_localStream = localStream,super._();
   
 
 @override@JsonKey() final  int currentBanner;
-@override final  UserModel? user;
+ final  Map<String, UserModel> _user;
+@override@JsonKey() Map<String, UserModel> get user {
+  if (_user is EqualUnmodifiableMapView) return _user;
+  // ignore: implicit_dynamic_type
+  return EqualUnmodifiableMapView(_user);
+}
+
 @override@JsonKey() final  String roomId;
  final  List<ChatPayloadModel> _chat;
 @override@JsonKey() List<ChatPayloadModel> get chat {
@@ -124,7 +130,13 @@ class _SignalingState extends SignalingState {
 @override@JsonKey() final  String toastMessage;
 @override@JsonKey() final  bool isCasting;
 @override final  CoturnConfigurationModel? coturnConfiguration;
-@override final  MediaStream? localStream;
+ final  Map<String, MediaStream> _localStream;
+@override@JsonKey() Map<String, MediaStream> get localStream {
+  if (_localStream is EqualUnmodifiableMapView) return _localStream;
+  // ignore: implicit_dynamic_type
+  return EqualUnmodifiableMapView(_localStream);
+}
+
 
 /// Create a copy of SignalingState
 /// with the given fields replaced by the non-null parameter values.
@@ -136,12 +148,12 @@ _$SignalingStateCopyWith<_SignalingState> get copyWith => __$SignalingStateCopyW
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _SignalingState&&(identical(other.currentBanner, currentBanner) || other.currentBanner == currentBanner)&&(identical(other.user, user) || other.user == user)&&(identical(other.roomId, roomId) || other.roomId == roomId)&&const DeepCollectionEquality().equals(other._chat, _chat)&&const DeepCollectionEquality().equals(other._iceCandidates, _iceCandidates)&&const DeepCollectionEquality().equals(other._remoteStream, _remoteStream)&&const DeepCollectionEquality().equals(other._peerConnection, _peerConnection)&&(identical(other.toastMessage, toastMessage) || other.toastMessage == toastMessage)&&(identical(other.isCasting, isCasting) || other.isCasting == isCasting)&&(identical(other.coturnConfiguration, coturnConfiguration) || other.coturnConfiguration == coturnConfiguration)&&(identical(other.localStream, localStream) || other.localStream == localStream));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _SignalingState&&(identical(other.currentBanner, currentBanner) || other.currentBanner == currentBanner)&&const DeepCollectionEquality().equals(other._user, _user)&&(identical(other.roomId, roomId) || other.roomId == roomId)&&const DeepCollectionEquality().equals(other._chat, _chat)&&const DeepCollectionEquality().equals(other._iceCandidates, _iceCandidates)&&const DeepCollectionEquality().equals(other._remoteStream, _remoteStream)&&const DeepCollectionEquality().equals(other._peerConnection, _peerConnection)&&(identical(other.toastMessage, toastMessage) || other.toastMessage == toastMessage)&&(identical(other.isCasting, isCasting) || other.isCasting == isCasting)&&(identical(other.coturnConfiguration, coturnConfiguration) || other.coturnConfiguration == coturnConfiguration)&&const DeepCollectionEquality().equals(other._localStream, _localStream));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,currentBanner,user,roomId,const DeepCollectionEquality().hash(_chat),const DeepCollectionEquality().hash(_iceCandidates),const DeepCollectionEquality().hash(_remoteStream),const DeepCollectionEquality().hash(_peerConnection),toastMessage,isCasting,coturnConfiguration,localStream);
+int get hashCode => Object.hash(runtimeType,currentBanner,const DeepCollectionEquality().hash(_user),roomId,const DeepCollectionEquality().hash(_chat),const DeepCollectionEquality().hash(_iceCandidates),const DeepCollectionEquality().hash(_remoteStream),const DeepCollectionEquality().hash(_peerConnection),toastMessage,isCasting,coturnConfiguration,const DeepCollectionEquality().hash(_localStream));
 
 @override
 String toString() {
@@ -156,7 +168,7 @@ abstract mixin class _$SignalingStateCopyWith<$Res> implements $SignalingStateCo
   factory _$SignalingStateCopyWith(_SignalingState value, $Res Function(_SignalingState) _then) = __$SignalingStateCopyWithImpl;
 @override @useResult
 $Res call({
- int currentBanner, UserModel? user, String roomId, List<ChatPayloadModel> chat, Map<String, List<IceCandidatePayloadModel>> iceCandidates, Map<String, MediaStreamModel> remoteStream, Map<String, RtcPeerConnectionModel> peerConnection, String toastMessage, bool isCasting, CoturnConfigurationModel? coturnConfiguration, MediaStream? localStream
+ int currentBanner, Map<String, UserModel> user, String roomId, List<ChatPayloadModel> chat, Map<String, List<IceCandidatePayloadModel>> iceCandidates, Map<String, MediaStreamModel> remoteStream, Map<String, RtcPeerConnectionModel> peerConnection, String toastMessage, bool isCasting, CoturnConfigurationModel? coturnConfiguration, Map<String, MediaStream> localStream
 });
 
 
@@ -173,11 +185,11 @@ class __$SignalingStateCopyWithImpl<$Res>
 
 /// Create a copy of SignalingState
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? currentBanner = null,Object? user = freezed,Object? roomId = null,Object? chat = null,Object? iceCandidates = null,Object? remoteStream = null,Object? peerConnection = null,Object? toastMessage = null,Object? isCasting = null,Object? coturnConfiguration = freezed,Object? localStream = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? currentBanner = null,Object? user = null,Object? roomId = null,Object? chat = null,Object? iceCandidates = null,Object? remoteStream = null,Object? peerConnection = null,Object? toastMessage = null,Object? isCasting = null,Object? coturnConfiguration = freezed,Object? localStream = null,}) {
   return _then(_SignalingState(
 currentBanner: null == currentBanner ? _self.currentBanner : currentBanner // ignore: cast_nullable_to_non_nullable
-as int,user: freezed == user ? _self.user : user // ignore: cast_nullable_to_non_nullable
-as UserModel?,roomId: null == roomId ? _self.roomId : roomId // ignore: cast_nullable_to_non_nullable
+as int,user: null == user ? _self._user : user // ignore: cast_nullable_to_non_nullable
+as Map<String, UserModel>,roomId: null == roomId ? _self.roomId : roomId // ignore: cast_nullable_to_non_nullable
 as String,chat: null == chat ? _self._chat : chat // ignore: cast_nullable_to_non_nullable
 as List<ChatPayloadModel>,iceCandidates: null == iceCandidates ? _self._iceCandidates : iceCandidates // ignore: cast_nullable_to_non_nullable
 as Map<String, List<IceCandidatePayloadModel>>,remoteStream: null == remoteStream ? _self._remoteStream : remoteStream // ignore: cast_nullable_to_non_nullable
@@ -185,8 +197,8 @@ as Map<String, MediaStreamModel>,peerConnection: null == peerConnection ? _self.
 as Map<String, RtcPeerConnectionModel>,toastMessage: null == toastMessage ? _self.toastMessage : toastMessage // ignore: cast_nullable_to_non_nullable
 as String,isCasting: null == isCasting ? _self.isCasting : isCasting // ignore: cast_nullable_to_non_nullable
 as bool,coturnConfiguration: freezed == coturnConfiguration ? _self.coturnConfiguration : coturnConfiguration // ignore: cast_nullable_to_non_nullable
-as CoturnConfigurationModel?,localStream: freezed == localStream ? _self.localStream : localStream // ignore: cast_nullable_to_non_nullable
-as MediaStream?,
+as CoturnConfigurationModel?,localStream: null == localStream ? _self._localStream : localStream // ignore: cast_nullable_to_non_nullable
+as Map<String, MediaStream>,
   ));
 }
 

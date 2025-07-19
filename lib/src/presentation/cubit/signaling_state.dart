@@ -7,7 +7,7 @@ sealed class SignalingState with _$SignalingState{
 
   factory SignalingState({
     @Default(0) int currentBanner,
-    UserModel? user,
+    @Default({}) Map<String, UserModel> user,
     @Default('') String roomId,
     @Default([]) List<ChatPayloadModel> chat,
     @Default({}) Map<String, List<IceCandidatePayloadModel>> iceCandidates,
@@ -16,6 +16,6 @@ sealed class SignalingState with _$SignalingState{
     @Default('') String toastMessage,
     @Default(false) bool isCasting,
     CoturnConfigurationModel? coturnConfiguration,
-    MediaStream? localStream,
+    @Default({}) Map<String, MediaStream> localStream,
   }) = _SignalingState;
 }

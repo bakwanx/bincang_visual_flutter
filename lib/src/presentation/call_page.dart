@@ -1,7 +1,9 @@
 import 'package:bincang_visual_flutter/src/data/models/rtc_video_renderer_model.dart';
 import 'package:bincang_visual_flutter/src/domain/entities/call_entity.dart';
+import 'package:bincang_visual_flutter/src/presentation/cubit/remote_cubit.dart';
 import 'package:bincang_visual_flutter/src/presentation/cubit/signaling_cubit.dart';
 import 'package:bincang_visual_flutter/src/presentation/dashboard_page.dart';
+import 'package:bincang_visual_flutter/src/presentation/widgets/custom_snackbar.dart';
 import 'package:bincang_visual_flutter/utils/extension/context_extension.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -77,7 +79,6 @@ class _CallPageUIState extends State<CallPageUI> {
     });
   }
 
-
   void toggleMic() {
     if (context.read<SignalingCubit>().state.localStream != null) {
       for (var track
@@ -123,6 +124,26 @@ class _CallPageUIState extends State<CallPageUI> {
     context.pushAndRemoveUntil(DashboardPage());
   }
 
+  Future<void> onShareScreen() async {
+    for (var pc in context.read<SignalingCubit>().state.peerConnection.values) {
+      if (pc.userModel.isCastingScreen) {
+        CustomSnackBar(
+          context: context,
+          message: "Someone is presenting a screen",
+        );
+        return;
+      }
+    }
+    final remoteCubit = context.read<RemoteCubit>();
+    final signalingCubit = context.read<SignalingCubit>();
+    await remoteCubit.registerUser(
+      "${widget.callEntity.user.username} Share Screen",
+    );
+
+    if (remoteCubit.state.user != null) {
+      signalingCubit.shareScreen(userModel: remoteCubit.state.user!);
+    }
+  }
 
   Widget participant() {
     return LayoutBuilder(
@@ -135,18 +156,19 @@ class _CallPageUIState extends State<CallPageUI> {
         const double minTileHeight = 200;
 
         final screenShareEntry = remoteRenderers.entries.firstWhere(
-              (entry) => entry.value.userModel.isCastingScreen,
-          orElse: () => MapEntry(
-            "__dummy__",
-            RtcVideoRendererModel(
-              rtcVideoRenderer: RTCVideoRenderer(),
-              userModel: UserModel(
-                id: '',
-                username: '',
-                isCastingScreen: false,
+          (entry) => entry.value.userModel.isCastingScreen,
+          orElse:
+              () => MapEntry(
+                "__dummy__",
+                RtcVideoRendererModel(
+                  rtcVideoRenderer: RTCVideoRenderer(),
+                  userModel: UserModel(
+                    id: '',
+                    username: '',
+                    isCastingScreen: false,
+                  ),
+                ),
               ),
-            ),
-          ),
         );
 
         if (screenShareEntry.value.userModel.isCastingScreen) {
@@ -167,18 +189,20 @@ class _CallPageUIState extends State<CallPageUI> {
                   width: screenWidth * 0.35,
                   child: ListView(
                     scrollDirection: Axis.horizontal,
-                    children: remoteRenderers.entries
-                        .where((entry) => entry.key != screenShareEntry.key)
-                        .map((entry) {
-                      return SizedBox(
-                        width: 120,
-                        height: 160,
-                        child: _buildParticipantTile(
-                          entry.value.userModel.username,
-                          entry.value.rtcVideoRenderer,
-                        ),
-                      );
-                    }).toList(),
+                    children:
+                        remoteRenderers.entries
+                            .where((entry) => entry.key != screenShareEntry.key)
+                            .map((entry) {
+                              return SizedBox(
+                                width: 120,
+                                height: 160,
+                                child: _buildParticipantTile(
+                                  entry.value.userModel.username,
+                                  entry.value.rtcVideoRenderer,
+                                ),
+                              );
+                            })
+                            .toList(),
                   ),
                 ),
               ),
@@ -233,7 +257,10 @@ class _CallPageUIState extends State<CallPageUI> {
                   return SizedBox(
                     width: tileWidth - 8,
                     height: tileHeight - 8,
-                    child: _buildParticipantTile(entry.value.userModel.username, entry.value.rtcVideoRenderer),
+                    child: _buildParticipantTile(
+                      entry.value.userModel.username,
+                      entry.value.rtcVideoRenderer,
+                    ),
                   );
                 }).toList(),
           );
@@ -254,7 +281,10 @@ class _CallPageUIState extends State<CallPageUI> {
               // // final isActive = participant.key == widget.activeSpeakerId;
               // final isActive = false;
               final participant = remoteRenderers.entries.elementAt(index);
-              return _buildParticipantTile(participant.value.userModel.username, participant.value.rtcVideoRenderer);
+              return _buildParticipantTile(
+                participant.value.userModel.username,
+                participant.value.rtcVideoRenderer,
+              );
             },
           );
         }
@@ -355,149 +385,170 @@ class _CallPageUIState extends State<CallPageUI> {
         ],
         automaticallyImplyLeading: false,
       ),
-      body: BlocListener<SignalingCubit, SignalingState>(
-        listenWhen: (previous, current) => previous.remoteStream != current.remoteStream,
+      body: BlocListener<RemoteCubit, RemoteState>(
         listener: (context, state) {
-          // Loop through the updated remote streams
-          state.remoteStream.forEach((key, stream) async {
-            if (!remoteRenderers.containsKey(key)) {
-              final renderer = RTCVideoRenderer();
-              await renderer.initialize();
-              renderer.srcObject = stream.mediaStream;
-
-              setState(() {
-                remoteRenderers[key] = RtcVideoRendererModel(
-                  rtcVideoRenderer: renderer,
-                  userModel: stream.userModel,
-                );
-              });
-            } else {
-              // Update existing renderer with the new stream
-              setState(() {
-                remoteRenderers[key]?.rtcVideoRenderer.srcObject = stream.mediaStream;
-              });
-
-            }
-          });
-
-          // Remove remote users who left
-          remoteRenderers.forEach((key, renderer) {
-            if (!state.remoteStream.containsKey(key)) {
-              renderer.rtcVideoRenderer.srcObject = null; // Clean up the stream if user leaves
-              remoteRenderers.remove(key);
-            }
-          });
+          // TODO: implement listener
         },
-        child: BlocBuilder<SignalingCubit, SignalingState>(
-          builder: (context, state) {
-            return Stack(
-              children: [
-                participant(),
+        listenWhen: (previous, current) => previous.user != current.user,
+        child: BlocListener<SignalingCubit, SignalingState>(
+          listenWhen:
+              (previous, current) =>
+                  previous.remoteStream != current.remoteStream,
+          listener: (context, state) {
+            // Loop through the updated remote streams
+            state.remoteStream.forEach((key, stream) async {
+              if (!remoteRenderers.containsKey(key)) {
+                final renderer = RTCVideoRenderer();
+                await renderer.initialize();
+                renderer.srcObject = stream.mediaStream;
 
-                // Local Video
-                Positioned(
-                  left: x,
-                  top: y,
-                  child: GestureDetector(
-                    onPanUpdate: (details) {
-                      setState(() {
-                        x += details.delta.dx;
-                        y += details.delta.dy;
-                      });
-                    },
-                    child: Container(
-                      width: 120,
-                      height: 160,
-                      margin: EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: Colors.grey,
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(20),
-                        child: RTCVideoView(
-                          localRenderer,
-                          mirror: true,
-                          objectFit:
-                              RTCVideoViewObjectFit.RTCVideoViewObjectFitCover,
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
+                setState(() {
+                  remoteRenderers[key] = RtcVideoRendererModel(
+                    rtcVideoRenderer: renderer,
+                    userModel: stream.userModel,
+                  );
+                });
+              } else {
+                // Update existing renderer with the new stream
+                setState(() {
+                  remoteRenderers[key]?.rtcVideoRenderer.srcObject =
+                      stream.mediaStream;
+                });
+              }
+            });
 
-                // Bottom Buttons
-                Align(
-                  alignment: Alignment.bottomCenter,
-                  child: Padding(
-                    padding: const EdgeInsets.only(bottom: 24.0),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        FloatingActionButton(
-                          heroTag: 'mic',
-                          backgroundColor:
-                              micEnabled
-                                  ? AppColors.secondaryColor
-                                  : Colors.red,
-                          onPressed: toggleMic,
-                          child: Icon(
-                            micEnabled ? Icons.mic : Icons.mic_off,
-                            color: Colors.white,
-                          ),
-                        ),
-                        SizedBox(width: 24),
-                        FloatingActionButton(
-                          heroTag: 'camera',
-                          backgroundColor:
-                              cameraEnabled
-                                  ? AppColors.secondaryColor
-                                  : Colors.red,
-                          onPressed: toggleCamera,
-                          child: Icon(
-                            cameraEnabled ? Icons.videocam : Icons.videocam_off,
-                            color: Colors.white,
-                          ),
-                        ),
-                        SizedBox(width: 24),
-                        FloatingActionButton(
-                          heroTag: 'leave',
-                          backgroundColor: Colors.redAccent,
-                          onPressed: leaveRoom,
-                          child: Icon(Icons.call_end),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-
-                context.isTablet()
-                    ? Align(
-                      alignment: Alignment.bottomRight,
-                      child: Padding(
-                        padding: const EdgeInsets.only(bottom: 24.0, right: 24),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.end,
-                          children: [
-                            FloatingActionButton(
-                              heroTag: 'chat',
-                              backgroundColor: Colors.white,
-                              onPressed: toggleChatPanel,
-                              child: Icon(Icons.message),
-                            ),
-                          ],
-                        ),
-                      ),
-                    )
-                    : SizedBox(),
-                _DisplayChat(
-                  toggleChatPanel: toggleChatPanel,
-                  isChatVisible: _isChatVisible,
-                  animationDuration: _animationDuration,
-                ),
-              ],
-            );
+            // Remove remote users who left
+            remoteRenderers.forEach((key, renderer) {
+              if (!state.remoteStream.containsKey(key)) {
+                renderer.rtcVideoRenderer.srcObject =
+                    null; // Clean up the stream if user leaves
+                remoteRenderers.remove(key);
+              }
+            });
           },
+          child: BlocBuilder<SignalingCubit, SignalingState>(
+            builder: (context, state) {
+              return Stack(
+                children: [
+                  participant(),
+
+                  // Local Video
+                  Positioned(
+                    left: x,
+                    top: y,
+                    child: GestureDetector(
+                      onPanUpdate: (details) {
+                        setState(() {
+                          x += details.delta.dx;
+                          y += details.delta.dy;
+                        });
+                      },
+                      child: Container(
+                        width: 120,
+                        height: 160,
+                        margin: EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: Colors.grey,
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(20),
+                          child: RTCVideoView(
+                            localRenderer,
+                            mirror: true,
+                            objectFit:
+                                RTCVideoViewObjectFit
+                                    .RTCVideoViewObjectFitCover,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+
+                  // Bottom Buttons
+                  Align(
+                    alignment: Alignment.bottomCenter,
+                    child: Padding(
+                      padding: const EdgeInsets.only(bottom: 24.0),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          FloatingActionButton(
+                            heroTag: 'mic',
+                            backgroundColor:
+                                micEnabled
+                                    ? AppColors.secondaryColor
+                                    : Colors.red,
+                            onPressed: toggleMic,
+                            child: Icon(
+                              micEnabled ? Icons.mic : Icons.mic_off,
+                              color: Colors.white,
+                            ),
+                          ),
+                          SizedBox(width: 24),
+                          FloatingActionButton(
+                            heroTag: 'camera',
+                            backgroundColor:
+                                cameraEnabled
+                                    ? AppColors.secondaryColor
+                                    : Colors.red,
+                            onPressed: toggleCamera,
+                            child: Icon(
+                              cameraEnabled
+                                  ? Icons.videocam
+                                  : Icons.videocam_off,
+                              color: Colors.white,
+                            ),
+                          ),
+                          SizedBox(width: 24),
+                          FloatingActionButton(
+                            heroTag: 'shareScreen',
+                            backgroundColor: Colors.redAccent,
+                            onPressed: onShareScreen,
+                            child: Icon(Icons.call_end),
+                          ),
+                          FloatingActionButton(
+                            heroTag: 'leave',
+                            backgroundColor: Colors.redAccent,
+                            onPressed: leaveRoom,
+                            child: Icon(Icons.call_end),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+
+                  context.isTablet()
+                      ? Align(
+                        alignment: Alignment.bottomRight,
+                        child: Padding(
+                          padding: const EdgeInsets.only(
+                            bottom: 24.0,
+                            right: 24,
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.end,
+                            children: [
+                              FloatingActionButton(
+                                heroTag: 'chat',
+                                backgroundColor: Colors.white,
+                                onPressed: toggleChatPanel,
+                                child: Icon(Icons.message),
+                              ),
+                            ],
+                          ),
+                        ),
+                      )
+                      : SizedBox(),
+                  _DisplayChat(
+                    toggleChatPanel: toggleChatPanel,
+                    isChatVisible: _isChatVisible,
+                    animationDuration: _animationDuration,
+                  ),
+                ],
+              );
+            },
+          ),
         ),
       ),
     );
@@ -604,7 +655,7 @@ class _DisplayChatState extends State<_DisplayChat> {
                   Expanded(
                     child: TextField(
                       controller: messageController,
-                      onSubmitted: (value){
+                      onSubmitted: (value) {
                         if (value.isNotEmpty) {
                           context.read<SignalingCubit>().sendChat(
                             messageController.text,

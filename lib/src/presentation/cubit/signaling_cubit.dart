@@ -39,20 +39,17 @@ class SignalingCubit extends Cubit<SignalingState> {
     callEntity.user.isCastingScreen = state.isCasting;
     emit(
       state.copyWith(
-        user: callEntity.user,
+        user: {callEntity.user.id: callEntity.user},
         roomId: callEntity.roomId,
         coturnConfiguration: callEntity.configurationModel,
       ),
     );
     initWebsocket(callEntity.roomId);
-    initLocalMedia(
-      cameraEnabled: callEntity.cameraEnabled,
-      micEnabled: callEntity.micEnabled,
-    );
+    initLocalMedia(cameraEnabled: callEntity.cameraEnabled, micEnabled: callEntity.micEnabled,);
   }
 
   initWebsocket(String roomId) {
-    webSocketService.connect(userId: state.user!.id, roomId: roomId).then((_) {
+    webSocketService.connect(userId: state.user.values.first.id, roomId: roomId).then((_) {
       initListen();
       requestOffer();
     });
@@ -149,23 +146,6 @@ class SignalingCubit extends Cubit<SignalingState> {
         ),
       ),
     );
-  }
-
-  Future<void> shareScreen({required Function(bool) onShareScreen}) async {
-    for (final pc in state.peerConnection.values) {
-      if (pc.userModel.isCastingScreen) {
-        onShareScreen(false);
-        return;
-      }
-    }
-
-    final userModel = state.user;
-    userModel?.isCastingScreen = true;
-
-    emit(state.copyWith(user: userModel));
-
-    requestOffer();
-    onShareScreen(true);
   }
 
   Future<void> offerSdp(RequestOfferingModel req) async {
@@ -436,7 +416,9 @@ class SignalingCubit extends Cubit<SignalingState> {
 
   void removeRemoteUserConnection(LeavePayloadModel leavePayloadModel) {
     final remoteUser = leavePayloadModel.user.id;
-    final remoteStreams = Map<String, MediaStreamModel>.from(state.remoteStream);
+    final remoteStreams = Map<String, MediaStreamModel>.from(
+      state.remoteStream,
+    );
     final iceCandidates = Map<String, List<IceCandidatePayloadModel>>.from(
       state.iceCandidates,
     );
@@ -464,7 +446,7 @@ class SignalingCubit extends Cubit<SignalingState> {
     required bool cameraEnabled,
   }) async {
     final mediaConstraints = {
-      'audio': true,
+      'audio': micEnabled,
       'video': {'facingMode': 'user'},
     };
     final localStream = await navigator.mediaDevices.getUserMedia(
@@ -483,11 +465,34 @@ class SignalingCubit extends Cubit<SignalingState> {
     emit(state.copyWith(localStream: localStream));
   }
 
-  Future<void> getDisplayMedia({bool video = true, bool audio = false}) async {
-    Map<String, dynamic> constraints = {'audio': audio, 'video': video};
+
+  Future<void> shareScreen({required UserModel userModel}) async {
+    userModel.isCastingScreen = true;
+    emit(state.copyWith(user: userModel));
+
+    getDisplayMedia();
+    requestOffer();
+
+  }
+
+  Future<void> getDisplayMedia({bool cameraEnabled = true, bool micEnabled = false}) async {
+    Map<String, dynamic> constraints = {'audio': micEnabled, 'video': cameraEnabled};
     final displayStream = await navigator.mediaDevices.getDisplayMedia(
       constraints,
     );
+    if (!micEnabled) {
+      for (var track in displayStream.getAudioTracks()) {
+        track.enabled = !track.enabled;
+      }
+    }
+    if (!cameraEnabled) {
+      for (var track in displayStream.getVideoTracks()) {
+        track.enabled = !track.enabled;
+      }
+    }
+    emit(state.copyWith(
+      displayStream: displayStream,
+    ));
   }
 
   void registerPeerConnectionListeners(String username) {
