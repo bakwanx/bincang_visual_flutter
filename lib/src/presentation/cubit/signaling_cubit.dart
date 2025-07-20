@@ -137,8 +137,7 @@ class SignalingCubit extends Cubit<SignalingState> {
     pc.onTrack = (RTCTrackEvent event) {
       print('Got remote track: ${event.streams[0]}');
       final stream = event.streams.isNotEmpty ? event.streams[0] : null;
-      if (stream != null &&
-          !state.remoteStream.containsKey(req.userRequest.id)) {
+      if (stream != null && !state.remoteStream.containsKey(req.userRequest.id)) {
         emit(
           state.copyWith(
             remoteStream: {...state.remoteStream, req.userRequest.id: stream},

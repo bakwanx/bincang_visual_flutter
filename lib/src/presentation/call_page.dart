@@ -1,4 +1,5 @@
 import 'package:bincang_visual_flutter/src/domain/entities/call_entity.dart';
+import 'package:bincang_visual_flutter/src/presentation/cubit/call_cubit.dart';
 import 'package:bincang_visual_flutter/src/presentation/cubit/signaling_cubit.dart';
 import 'package:bincang_visual_flutter/src/presentation/dashboard_page.dart';
 import 'package:bincang_visual_flutter/utils/extension/context_extension.dart';
@@ -16,8 +17,19 @@ class CallPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider(
-      create: (context) => di<SignalingCubit>()..init(callEntity: callEntity),
+    return MultiBlocProvider(
+      providers: [
+        BlocProvider(
+          create:
+              (context) => di<SignalingCubit>()..init(callEntity: callEntity),
+        ),
+        BlocProvider(
+          create:
+              (context) =>
+                  di<CallCubit>()
+                    ..init(callEntity.micEnabled, callEntity.cameraEnabled),
+        ),
+      ],
       child: CallPageUI(callEntity: callEntity),
     );
   }
@@ -26,184 +38,145 @@ class CallPage extends StatelessWidget {
 class CallPageUI extends StatefulWidget {
   final CallEntity callEntity;
 
-  const CallPageUI({required this.callEntity});
+  const CallPageUI({super.key, required this.callEntity});
 
   @override
   State<CallPageUI> createState() => _CallPageUIState();
 }
 
 class _CallPageUIState extends State<CallPageUI> {
-  double x = 0;
-  double y = 0;
-  bool micEnabled = true;
-  bool cameraEnabled = true;
-
-  final RTCVideoRenderer localRenderer = RTCVideoRenderer();
-  final Map<String, RTCVideoRenderer> remoteRenderers = {};
-  bool _isChatVisible = false;
-  final Duration _animationDuration = Duration(milliseconds: 300);
 
   void toggleChatPanel() {
-    setState(() {
-      _isChatVisible = !_isChatVisible;
-    });
+    context.read<CallCubit>().setVisibleChat();
   }
 
   @override
   void initState() {
     super.initState();
     init();
-    initCameraAndMic();
-  }
-
-  void initCameraAndMic() {
-    micEnabled = widget.callEntity.micEnabled;
-    cameraEnabled = widget.callEntity.cameraEnabled;
   }
 
   Future<void> init() async {
     final signalingCubit = context.read<SignalingCubit>();
-
-    await localRenderer.initialize();
-
     signalingCubit.stream.listen((state) {
-      // Initialize local stream
-      if (state.localStream != null &&
-          localRenderer.srcObject != state.localStream) {
-        localRenderer.srcObject = state.localStream;
+      if (mounted) {
+        context.read<CallCubit>().setLocalStream(state.localStream);
       }
     });
   }
 
-
   void toggleMic() {
-    if (context.read<SignalingCubit>().state.localStream != null) {
-      for (var track
-          in context
-              .read<SignalingCubit>()
-              .state
-              .localStream!
-              .getAudioTracks()) {
-        track.enabled = !track.enabled;
-      }
-      setState(() {
-        micEnabled = !micEnabled;
-      });
+    final localStream = context.read<SignalingCubit>().state.localStream;
+    if (localStream != null) {
+      context.read<CallCubit>().setMic(localStream);
     }
   }
 
   void toggleCamera() {
-    if (context.read<SignalingCubit>().state.localStream != null) {
-      for (var track
-          in context
-              .read<SignalingCubit>()
-              .state
-              .localStream!
-              .getVideoTracks()) {
-        track.enabled = !track.enabled;
-      }
-      setState(() {
-        cameraEnabled = !cameraEnabled;
-      });
+    final localStream = context.read<SignalingCubit>().state.localStream;
+    if (localStream != null) {
+      context.read<CallCubit>().setCamera(localStream);
     }
   }
 
   void leaveRoom() {
+    context.read<CallCubit>().leave();
     context.read<SignalingCubit>().leave();
-    for (final renderer in remoteRenderers.values) {
-      renderer.srcObject = null;
-      renderer.dispose();
-    }
-    localRenderer.srcObject = null;
-    remoteRenderers.clear();
-    localRenderer.dispose();
-    setState(() {});
     context.pushAndRemoveUntil(DashboardPage());
   }
 
-
   Widget participant() {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final double screenWidth = constraints.maxWidth;
-        final double screenHeight = constraints.maxHeight;
-        final bool isPortrait = screenHeight > screenWidth;
+    return BlocBuilder<CallCubit, CallState>(
+      builder: (context, state) {
+        return LayoutBuilder(
+          builder: (context, constraints) {
+            final double screenWidth = constraints.maxWidth;
+            final double screenHeight = constraints.maxHeight;
+            final bool isPortrait = screenHeight > screenWidth;
 
-        const double minTileWidth = 200;
-        const double minTileHeight = 200;
+            const double minTileWidth = 200;
+            const double minTileHeight = 200;
 
-        if (remoteRenderers.entries.length <= 2) {
-          return remoteRenderers.entries.length == 1
-              ? _buildFullScreenParticipant(
-                remoteRenderers.entries.first.key,
-                remoteRenderers.entries.first.value,
-                false,
-              )
-              : (isPortrait
-                  ? Column(
-                    children:
-                        remoteRenderers.entries.map((entry) {
-                          return Expanded(
-                            child: _buildParticipantTile(
-                              entry.key,
-                              entry.value,
-                            ),
-                          );
-                        }).toList(),
+            if (state.remoteRenderer.entries.length <= 2) {
+              return state.remoteRenderer.entries.length == 1
+                  ? _buildFullScreenParticipant(
+                    state.remoteRenderer.entries.first.key,
+                    state.remoteRenderer.entries.first.value,
+                    false,
                   )
-                  : Row(
-                    children:
-                        remoteRenderers.entries.map((entry) {
-                          return Expanded(
-                            child: _buildParticipantTile(
-                              entry.key,
-                              entry.value,
-                            ),
-                          );
-                        }).toList(),
-                  ));
-        }
+                  : (isPortrait
+                      ? Column(
+                        children:
+                            state.remoteRenderer.entries.map((entry) {
+                              return Expanded(
+                                child: _buildParticipantTile(
+                                  entry.key,
+                                  entry.value,
+                                ),
+                              );
+                            }).toList(),
+                      )
+                      : Row(
+                        children:
+                            state.remoteRenderer.entries.map((entry) {
+                              return Expanded(
+                                child: _buildParticipantTile(
+                                  entry.key,
+                                  entry.value,
+                                ),
+                              );
+                            }).toList(),
+                      ));
+            }
 
-        int columns = isPortrait ? 2 : 3;
-        double tileWidth = screenWidth / columns;
-        double tileHeight =
-            screenHeight / ((remoteRenderers.entries.length / columns).ceil());
+            int columns = isPortrait ? 2 : 3;
+            double tileWidth = screenWidth / columns;
+            double tileHeight =
+                screenHeight /
+                ((state.remoteRenderer.entries.length / columns).ceil());
 
-        if (tileWidth >= minTileWidth && tileHeight >= minTileHeight) {
-          return Wrap(
-            alignment: WrapAlignment.center,
-            spacing: 8,
-            runSpacing: 8,
-            children:
-                remoteRenderers.entries.map((entry) {
-                  return SizedBox(
-                    width: tileWidth - 8,
-                    height: tileHeight - 8,
-                    child: _buildParticipantTile(entry.key, entry.value),
+            if (tileWidth >= minTileWidth && tileHeight >= minTileHeight) {
+              return Wrap(
+                alignment: WrapAlignment.center,
+                spacing: 8,
+                runSpacing: 8,
+                children:
+                    state.remoteRenderer.entries.map((entry) {
+                      return SizedBox(
+                        width: tileWidth - 8,
+                        height: tileHeight - 8,
+                        child: _buildParticipantTile(entry.key, entry.value),
+                      );
+                    }).toList(),
+              );
+            } else {
+              return GridView.builder(
+                padding: const EdgeInsets.all(8),
+                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: isPortrait ? 2 : 4,
+                  crossAxisSpacing: 8,
+                  mainAxisSpacing: 8,
+                  childAspectRatio: isPortrait ? 3 / 4 : 4 / 3,
+                ),
+                itemCount: state.remoteRenderer.entries.length,
+                itemBuilder: (context, index) {
+                  // final entry = remoteRenderers.entries.toList()[0];
+                  // final renderer = entry.value;
+                  // final key = entry.key;
+                  // // final isActive = participant.key == widget.activeSpeakerId;
+                  // final isActive = false;
+                  final participant = state.remoteRenderer.entries.elementAt(
+                    index,
                   );
-                }).toList(),
-          );
-        } else {
-          return GridView.builder(
-            padding: const EdgeInsets.all(8),
-            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: isPortrait ? 2 : 4,
-              crossAxisSpacing: 8,
-              mainAxisSpacing: 8,
-              childAspectRatio: isPortrait ? 3 / 4 : 4 / 3,
-            ),
-            itemCount: remoteRenderers.entries.length,
-            itemBuilder: (context, index) {
-              // final entry = remoteRenderers.entries.toList()[0];
-              // final renderer = entry.value;
-              // final key = entry.key;
-              // // final isActive = participant.key == widget.activeSpeakerId;
-              // final isActive = false;
-              final participant = remoteRenderers.entries.elementAt(index);
-              return _buildParticipantTile(participant.key, participant.value);
-            },
-          );
-        }
+                  return _buildParticipantTile(
+                    participant.key,
+                    participant.value,
+                  );
+                },
+              );
+            }
+          },
+        );
       },
     );
   }
@@ -291,6 +264,7 @@ class _CallPageUIState extends State<CallPageUI> {
 
   @override
   Widget build(BuildContext context) {
+    final callCubit = context.read<CallCubit>();
     return Scaffold(
       appBar: AppBar(
         title: Text('user: ${widget.callEntity.user.username}'),
@@ -301,146 +275,143 @@ class _CallPageUIState extends State<CallPageUI> {
         ],
         automaticallyImplyLeading: false,
       ),
-      body: BlocListener<SignalingCubit, SignalingState>(
-        listenWhen:
-            (previous, current) =>
-                previous.remoteStream != current.remoteStream,
-        listener: (context, state) {
-          // Loop through the updated remote streams
-          state.remoteStream.forEach((key, stream) {
-            if (!remoteRenderers.containsKey(key)) {
-              final renderer = RTCVideoRenderer();
-              renderer.initialize().then((_) {
-                renderer.srcObject = stream;
-                setState(() {
-                  remoteRenderers[key] = renderer;
-                });
+      body: BlocBuilder<CallCubit, CallState>(
+        builder: (context, callState) {
+          return BlocListener<SignalingCubit, SignalingState>(
+            listenWhen:
+                (previous, current) =>
+                    previous.remoteStream != current.remoteStream,
+            listener: (context, signalingState) {
+              // Loop through the updated remote streams
+              signalingState.remoteStream.forEach((key, stream) {
+                callCubit.setRemoteStream(key, stream);
               });
-            } else {
-              // Update existing renderer with the new stream
-              remoteRenderers[key]?.srcObject = stream;
-            }
-          });
 
-          // Remove remote users who left
-          remoteRenderers.forEach((key, renderer) {
-            if (!state.remoteStream.containsKey(key)) {
-              renderer.srcObject = null; // Clean up the stream if user leaves
-              remoteRenderers.remove(key);
-            }
-          });
-        },
-        child: BlocBuilder<SignalingCubit, SignalingState>(
-          builder: (context, state) {
-            return Stack(
-              children: [
-                participant(),
+              // Remove remote users who left
+              callState.remoteRenderer.forEach((key, renderer) {
+                if (!signalingState.remoteStream.containsKey(key)) {
+                  callCubit.removeRemoteStream(key);
+                }
+              });
+            },
+            child: BlocBuilder<SignalingCubit, SignalingState>(
+              builder: (context, state) {
+                return Stack(
+                  children: [
+                    participant(),
 
-                // Local Video
-                Positioned(
-                  left: x,
-                  top: y,
-                  child: GestureDetector(
-                    onPanUpdate: (details) {
-                      setState(() {
-                        x += details.delta.dx;
-                        y += details.delta.dy;
-                      });
-                    },
-                    child: Container(
-                      width: 120,
-                      height: 160,
-                      margin: EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: Colors.grey,
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(20),
-                        child: RTCVideoView(
-                          localRenderer,
-                          mirror: true,
-                          objectFit:
-                              RTCVideoViewObjectFit.RTCVideoViewObjectFitCover,
+                    // Local Video
+                    Positioned(
+                      left: callState.x,
+                      top: callState.y,
+                      child: GestureDetector(
+                        onPanUpdate: (details) {
+                          context.read<CallCubit>().axisXY(details.delta.dx, details.delta.dy);
+                        },
+                        child: Container(
+                          width: 120,
+                          height: 160,
+                          margin: EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: Colors.grey,
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(20),
+                            child: RTCVideoView(
+                              callState.localRenderer!,
+                              mirror: true,
+                              objectFit:
+                                  RTCVideoViewObjectFit
+                                      .RTCVideoViewObjectFitCover,
+                            ),
+                          ),
                         ),
                       ),
                     ),
-                  ),
-                ),
 
-                // Bottom Buttons
-                Align(
-                  alignment: Alignment.bottomCenter,
-                  child: Padding(
-                    padding: const EdgeInsets.only(bottom: 24.0),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        FloatingActionButton(
-                          heroTag: 'mic',
-                          backgroundColor:
-                              micEnabled
-                                  ? AppColors.secondaryColor
-                                  : Colors.red,
-                          onPressed: toggleMic,
-                          child: Icon(
-                            micEnabled ? Icons.mic : Icons.mic_off,
-                            color: Colors.white,
-                          ),
-                        ),
-                        SizedBox(width: 24),
-                        FloatingActionButton(
-                          heroTag: 'camera',
-                          backgroundColor:
-                              cameraEnabled
-                                  ? AppColors.secondaryColor
-                                  : Colors.red,
-                          onPressed: toggleCamera,
-                          child: Icon(
-                            cameraEnabled ? Icons.videocam : Icons.videocam_off,
-                            color: Colors.white,
-                          ),
-                        ),
-                        SizedBox(width: 24),
-                        FloatingActionButton(
-                          heroTag: 'leave',
-                          backgroundColor: Colors.redAccent,
-                          onPressed: leaveRoom,
-                          child: Icon(Icons.call_end),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-
-                context.isTablet()
-                    ? Align(
-                      alignment: Alignment.bottomRight,
+                    // Bottom Buttons
+                    Align(
+                      alignment: Alignment.bottomCenter,
                       child: Padding(
-                        padding: const EdgeInsets.only(bottom: 24.0, right: 24),
+                        padding: const EdgeInsets.only(bottom: 24.0),
                         child: Row(
-                          mainAxisAlignment: MainAxisAlignment.end,
+                          mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             FloatingActionButton(
-                              heroTag: 'chat',
-                              backgroundColor: Colors.white,
-                              onPressed: toggleChatPanel,
-                              child: Icon(Icons.message),
+                              heroTag: 'mic',
+                              backgroundColor:
+                                  callState.micEnabled
+                                      ? AppColors.secondaryColor
+                                      : Colors.red,
+                              onPressed: toggleMic,
+                              child: Icon(
+                                callState.micEnabled
+                                    ? Icons.mic
+                                    : Icons.mic_off,
+                                color: Colors.white,
+                              ),
+                            ),
+                            SizedBox(width: 24),
+                            FloatingActionButton(
+                              heroTag: 'camera',
+                              backgroundColor:
+                                  callState.cameraEnabled
+                                      ? AppColors.secondaryColor
+                                      : Colors.red,
+                              onPressed: toggleCamera,
+                              child: Icon(
+                                callState.cameraEnabled
+                                    ? Icons.videocam
+                                    : Icons.videocam_off,
+                                color: Colors.white,
+                              ),
+                            ),
+                            SizedBox(width: 24),
+                            FloatingActionButton(
+                              heroTag: 'leave',
+                              backgroundColor: Colors.redAccent,
+                              onPressed: leaveRoom,
+                              child: Icon(Icons.call_end),
                             ),
                           ],
                         ),
                       ),
-                    )
-                    : SizedBox(),
-                _DisplayChat(
-                  toggleChatPanel: toggleChatPanel,
-                  isChatVisible: _isChatVisible,
-                  animationDuration: _animationDuration,
-                ),
-              ],
-            );
-          },
-        ),
+                    ),
+
+                    context.isTablet()
+                        ? Align(
+                          alignment: Alignment.bottomRight,
+                          child: Padding(
+                            padding: const EdgeInsets.only(
+                              bottom: 24.0,
+                              right: 24,
+                            ),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.end,
+                              children: [
+                                FloatingActionButton(
+                                  heroTag: 'chat',
+                                  backgroundColor: Colors.white,
+                                  onPressed: toggleChatPanel,
+                                  child: Icon(Icons.message),
+                                ),
+                              ],
+                            ),
+                          ),
+                        )
+                        : SizedBox(),
+                    _DisplayChat(
+                      toggleChatPanel: toggleChatPanel,
+                      isChatVisible: callState.isChatVisible,
+                      animationDuration: Duration(milliseconds: 300),
+                    ),
+                  ],
+                );
+              },
+            ),
+          );
+        },
       ),
     );
   }
@@ -469,11 +440,8 @@ class _DisplayChatState extends State<_DisplayChat> {
   Widget build(BuildContext context) {
     final double screenWidth = MediaQuery.of(context).size.width;
     final double chatWidth =
-        context.isTablet()
-            ? screenWidth * 0.4
-            : context.width(); // 60% of screen
-    return // Chat Panel
-    AnimatedPositioned(
+        context.isTablet() ? screenWidth * 0.4 : context.width();
+    return AnimatedPositioned(
       duration: widget.animationDuration,
       right: widget.isChatVisible ? 0 : -chatWidth,
       top: 0,
@@ -546,7 +514,7 @@ class _DisplayChatState extends State<_DisplayChat> {
                   Expanded(
                     child: TextField(
                       controller: messageController,
-                      onSubmitted: (value){
+                      onSubmitted: (value) {
                         if (value.isNotEmpty) {
                           context.read<SignalingCubit>().sendChat(
                             messageController.text,

@@ -3,6 +3,7 @@ import 'package:bincang_visual_flutter/src/data/datasource/remote_datasource.dar
 import 'package:bincang_visual_flutter/src/domain/repositories/remote_repository.dart';
 import 'package:bincang_visual_flutter/src/domain/usecase/remote_usecase.dart';
 import 'package:bincang_visual_flutter/src/presentation/cubit/banner_cubit.dart';
+import 'package:bincang_visual_flutter/src/presentation/cubit/call_cubit.dart';
 import 'package:bincang_visual_flutter/src/presentation/cubit/remote_cubit.dart';
 import 'package:bincang_visual_flutter/utils/const/api_path.dart';
 import 'package:dio/dio.dart';
@@ -20,55 +21,46 @@ final di = GetIt.asNewInstance();
 
 Future<void> initDependency() async {
   di.registerLazySingleton(
-        () => Dio(
-          BaseOptions(
-              contentType: 'application/json',
-              connectTimeout: const Duration(seconds: 30),
-              sendTimeout: const Duration(seconds: 30),
-              receiveTimeout: const Duration(seconds: 30),
-            baseUrl: ApiPath.httpBaseUrl,
-          ),
-        ),
+    () => Dio(
+      BaseOptions(
+        contentType: 'application/json',
+        connectTimeout: const Duration(seconds: 30),
+        sendTimeout: const Duration(seconds: 30),
+        receiveTimeout: const Duration(seconds: 30),
+        baseUrl: ApiPath.httpBaseUrl,
+      ),
+    ),
   );
 
   di<Dio>().interceptors.add(LoggingInterceptor());
 
-  di.registerLazySingleton(
-        () => WebSocketService(),
-  );
+  di.registerLazySingleton(() => WebSocketService());
 
   // Datasource
-  di.registerLazySingleton<RemoteDataSource>(
-        () => RemoteDataSourceImpl(di()),
-  );
+  di.registerLazySingleton<RemoteDataSource>(() => RemoteDataSourceImpl(di()));
   di.registerLazySingleton<SignalingDataSource>(
-        () => SignalingDataSourceImpl(webSocketService: di()),
+    () => SignalingDataSourceImpl(webSocketService: di()),
   );
 
   // Repository
   di.registerLazySingleton<SignalingRepository>(
-        () => SignalingRepositoryImpl(signalingDataSource: di()),
+    () => SignalingRepositoryImpl(signalingDataSource: di()),
   );
-  di.registerLazySingleton<RemoteRepository>(
-        () => RemoteRepositoryImpl(di()),
-  );
+  di.registerLazySingleton<RemoteRepository>(() => RemoteRepositoryImpl(di()));
 
   // UseCase
   di.registerLazySingleton<SignalingUseCase>(
-        () => SignalingUseCase(repository: di()),
+    () => SignalingUseCase(repository: di()),
   );
   di.registerLazySingleton<RemoteUseCase>(
-        () => RemoteUseCase(repository: di()),
+    () => RemoteUseCase(repository: di()),
   );
 
   // Cubit
   di.registerFactory<SignalingCubit>(
-        () => SignalingCubit(signalingUseCase: di(), webSocketService: di()),
+    () => SignalingCubit(signalingUseCase: di(), webSocketService: di()),
   );
-  di.registerFactory<RemoteCubit>(
-        () => RemoteCubit(remoteUseCase: di()),
-  );
-  di.registerFactory<BannerCubit>(
-        () => BannerCubit(),
-  );
+  di.registerFactory<CallCubit>(() => CallCubit());
+  di.registerFactory<RemoteCubit>(() => RemoteCubit(remoteUseCase: di()));
+  di.registerFactory<BannerCubit>(() => BannerCubit());
 }

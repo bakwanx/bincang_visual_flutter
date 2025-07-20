@@ -6,7 +6,6 @@ sealed class SignalingState with _$SignalingState{
   SignalingState._();
 
   factory SignalingState({
-    @Default(0) int currentBanner,
     UserModel? user,
     @Default('') String roomId,
     @Default([]) List<ChatPayloadModel> chat,
