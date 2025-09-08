@@ -1,6 +1,7 @@
+import 'package:bincang_visual_flutter/src/data/models/payload_model.dart';
 import 'package:bincang_visual_flutter/src/data/models/user_model.dart';
 
-class IceCandidatePayloadModel {
+class IceCandidatePayloadModel extends PayloadModel {
   String candidate;
   int sdpMLineIndex;
   String sdpMid;

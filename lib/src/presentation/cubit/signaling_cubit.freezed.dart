@@ -15,7 +15,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$SignalingState {
 
- UserModel? get user; String get roomId; List<ChatPayloadModel> get chat; Map<String, List<IceCandidatePayloadModel>> get iceCandidates; Map<String, MediaStream> get remoteStream; Map<String, RTCPeerConnection> get peerConnection; String get toastMessage; CoturnConfigurationModel? get coturnConfiguration; MediaStream? get localStream;
+ UserEntity? get user; String get roomId; List<ChatPayloadEntity> get chat; Map<String, List<IceCandidatePayloadEntity>> get iceCandidates; Map<String, MediaStream> get remoteStream; Map<String, RTCPeerConnection> get peerConnection; String get toastMessage; CoturnConfigurationEntity? get coturnConfiguration; MediaStream? get localStream;
 /// Create a copy of SignalingState
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -46,7 +46,7 @@ abstract mixin class $SignalingStateCopyWith<$Res>  {
   factory $SignalingStateCopyWith(SignalingState value, $Res Function(SignalingState) _then) = _$SignalingStateCopyWithImpl;
 @useResult
 $Res call({
- UserModel? user, String roomId, List<ChatPayloadModel> chat, Map<String, List<IceCandidatePayloadModel>> iceCandidates, Map<String, MediaStream> remoteStream, Map<String, RTCPeerConnection> peerConnection, String toastMessage, CoturnConfigurationModel? coturnConfiguration, MediaStream? localStream
+ UserEntity? user, String roomId, List<ChatPayloadEntity> chat, Map<String, List<IceCandidatePayloadEntity>> iceCandidates, Map<String, MediaStream> remoteStream, Map<String, RTCPeerConnection> peerConnection, String toastMessage, CoturnConfigurationEntity? coturnConfiguration, MediaStream? localStream
 });
 
 
@@ -66,14 +66,14 @@ class _$SignalingStateCopyWithImpl<$Res>
 @pragma('vm:prefer-inline') @override $Res call({Object? user = freezed,Object? roomId = null,Object? chat = null,Object? iceCandidates = null,Object? remoteStream = null,Object? peerConnection = null,Object? toastMessage = null,Object? coturnConfiguration = freezed,Object? localStream = freezed,}) {
   return _then(_self.copyWith(
 user: freezed == user ? _self.user : user // ignore: cast_nullable_to_non_nullable
-as UserModel?,roomId: null == roomId ? _self.roomId : roomId // ignore: cast_nullable_to_non_nullable
+as UserEntity?,roomId: null == roomId ? _self.roomId : roomId // ignore: cast_nullable_to_non_nullable
 as String,chat: null == chat ? _self.chat : chat // ignore: cast_nullable_to_non_nullable
-as List<ChatPayloadModel>,iceCandidates: null == iceCandidates ? _self.iceCandidates : iceCandidates // ignore: cast_nullable_to_non_nullable
-as Map<String, List<IceCandidatePayloadModel>>,remoteStream: null == remoteStream ? _self.remoteStream : remoteStream // ignore: cast_nullable_to_non_nullable
+as List<ChatPayloadEntity>,iceCandidates: null == iceCandidates ? _self.iceCandidates : iceCandidates // ignore: cast_nullable_to_non_nullable
+as Map<String, List<IceCandidatePayloadEntity>>,remoteStream: null == remoteStream ? _self.remoteStream : remoteStream // ignore: cast_nullable_to_non_nullable
 as Map<String, MediaStream>,peerConnection: null == peerConnection ? _self.peerConnection : peerConnection // ignore: cast_nullable_to_non_nullable
 as Map<String, RTCPeerConnection>,toastMessage: null == toastMessage ? _self.toastMessage : toastMessage // ignore: cast_nullable_to_non_nullable
 as String,coturnConfiguration: freezed == coturnConfiguration ? _self.coturnConfiguration : coturnConfiguration // ignore: cast_nullable_to_non_nullable
-as CoturnConfigurationModel?,localStream: freezed == localStream ? _self.localStream : localStream // ignore: cast_nullable_to_non_nullable
+as CoturnConfigurationEntity?,localStream: freezed == localStream ? _self.localStream : localStream // ignore: cast_nullable_to_non_nullable
 as MediaStream?,
   ));
 }
@@ -85,20 +85,20 @@ as MediaStream?,
 
 
 class _SignalingState extends SignalingState {
-   _SignalingState({this.user, this.roomId = '', final  List<ChatPayloadModel> chat = const [], final  Map<String, List<IceCandidatePayloadModel>> iceCandidates = const {}, final  Map<String, MediaStream> remoteStream = const {}, final  Map<String, RTCPeerConnection> peerConnection = const {}, this.toastMessage = '', this.coturnConfiguration, this.localStream}): _chat = chat,_iceCandidates = iceCandidates,_remoteStream = remoteStream,_peerConnection = peerConnection,super._();
+   _SignalingState({this.user, this.roomId = '', final  List<ChatPayloadEntity> chat = const [], final  Map<String, List<IceCandidatePayloadEntity>> iceCandidates = const {}, final  Map<String, MediaStream> remoteStream = const {}, final  Map<String, RTCPeerConnection> peerConnection = const {}, this.toastMessage = '', this.coturnConfiguration, this.localStream}): _chat = chat,_iceCandidates = iceCandidates,_remoteStream = remoteStream,_peerConnection = peerConnection,super._();
   
 
-@override final  UserModel? user;
+@override final  UserEntity? user;
 @override@JsonKey() final  String roomId;
- final  List<ChatPayloadModel> _chat;
-@override@JsonKey() List<ChatPayloadModel> get chat {
+ final  List<ChatPayloadEntity> _chat;
+@override@JsonKey() List<ChatPayloadEntity> get chat {
   if (_chat is EqualUnmodifiableListView) return _chat;
   // ignore: implicit_dynamic_type
   return EqualUnmodifiableListView(_chat);
 }
 
- final  Map<String, List<IceCandidatePayloadModel>> _iceCandidates;
-@override@JsonKey() Map<String, List<IceCandidatePayloadModel>> get iceCandidates {
+ final  Map<String, List<IceCandidatePayloadEntity>> _iceCandidates;
+@override@JsonKey() Map<String, List<IceCandidatePayloadEntity>> get iceCandidates {
   if (_iceCandidates is EqualUnmodifiableMapView) return _iceCandidates;
   // ignore: implicit_dynamic_type
   return EqualUnmodifiableMapView(_iceCandidates);
@@ -119,7 +119,7 @@ class _SignalingState extends SignalingState {
 }
 
 @override@JsonKey() final  String toastMessage;
-@override final  CoturnConfigurationModel? coturnConfiguration;
+@override final  CoturnConfigurationEntity? coturnConfiguration;
 @override final  MediaStream? localStream;
 
 /// Create a copy of SignalingState
@@ -152,7 +152,7 @@ abstract mixin class _$SignalingStateCopyWith<$Res> implements $SignalingStateCo
   factory _$SignalingStateCopyWith(_SignalingState value, $Res Function(_SignalingState) _then) = __$SignalingStateCopyWithImpl;
 @override @useResult
 $Res call({
- UserModel? user, String roomId, List<ChatPayloadModel> chat, Map<String, List<IceCandidatePayloadModel>> iceCandidates, Map<String, MediaStream> remoteStream, Map<String, RTCPeerConnection> peerConnection, String toastMessage, CoturnConfigurationModel? coturnConfiguration, MediaStream? localStream
+ UserEntity? user, String roomId, List<ChatPayloadEntity> chat, Map<String, List<IceCandidatePayloadEntity>> iceCandidates, Map<String, MediaStream> remoteStream, Map<String, RTCPeerConnection> peerConnection, String toastMessage, CoturnConfigurationEntity? coturnConfiguration, MediaStream? localStream
 });
 
 
@@ -172,14 +172,14 @@ class __$SignalingStateCopyWithImpl<$Res>
 @override @pragma('vm:prefer-inline') $Res call({Object? user = freezed,Object? roomId = null,Object? chat = null,Object? iceCandidates = null,Object? remoteStream = null,Object? peerConnection = null,Object? toastMessage = null,Object? coturnConfiguration = freezed,Object? localStream = freezed,}) {
   return _then(_SignalingState(
 user: freezed == user ? _self.user : user // ignore: cast_nullable_to_non_nullable
-as UserModel?,roomId: null == roomId ? _self.roomId : roomId // ignore: cast_nullable_to_non_nullable
+as UserEntity?,roomId: null == roomId ? _self.roomId : roomId // ignore: cast_nullable_to_non_nullable
 as String,chat: null == chat ? _self._chat : chat // ignore: cast_nullable_to_non_nullable
-as List<ChatPayloadModel>,iceCandidates: null == iceCandidates ? _self._iceCandidates : iceCandidates // ignore: cast_nullable_to_non_nullable
-as Map<String, List<IceCandidatePayloadModel>>,remoteStream: null == remoteStream ? _self._remoteStream : remoteStream // ignore: cast_nullable_to_non_nullable
+as List<ChatPayloadEntity>,iceCandidates: null == iceCandidates ? _self._iceCandidates : iceCandidates // ignore: cast_nullable_to_non_nullable
+as Map<String, List<IceCandidatePayloadEntity>>,remoteStream: null == remoteStream ? _self._remoteStream : remoteStream // ignore: cast_nullable_to_non_nullable
 as Map<String, MediaStream>,peerConnection: null == peerConnection ? _self._peerConnection : peerConnection // ignore: cast_nullable_to_non_nullable
 as Map<String, RTCPeerConnection>,toastMessage: null == toastMessage ? _self.toastMessage : toastMessage // ignore: cast_nullable_to_non_nullable
 as String,coturnConfiguration: freezed == coturnConfiguration ? _self.coturnConfiguration : coturnConfiguration // ignore: cast_nullable_to_non_nullable
-as CoturnConfigurationModel?,localStream: freezed == localStream ? _self.localStream : localStream // ignore: cast_nullable_to_non_nullable
+as CoturnConfigurationEntity?,localStream: freezed == localStream ? _self.localStream : localStream // ignore: cast_nullable_to_non_nullable
 as MediaStream?,
   ));
 }

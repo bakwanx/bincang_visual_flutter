@@ -1,6 +1,9 @@
 import 'dart:async';
 
 import 'package:bincang_visual_flutter/src/data/models/coturn_configuration_model.dart';
+import 'package:bincang_visual_flutter/src/domain/entities/coturn_configuration_entity.dart';
+import 'package:bincang_visual_flutter/src/domain/entities/create_room_entity.dart';
+import 'package:bincang_visual_flutter/src/domain/entities/user_entity.dart';
 import 'package:bincang_visual_flutter/src/domain/usecase/remote_usecase.dart';
 import 'package:bloc/bloc.dart';
 import 'package:flutter/cupertino.dart';
@@ -23,33 +26,33 @@ class RemoteCubit extends Cubit<RemoteState> {
     final result = await remoteUseCase.registerUser(username);
     final config = await remoteUseCase.getConfiguration();
 
-    UserModel? userModel;
-    CoturnConfigurationModel? coturnConfigurationModel;
+    UserEntity? userEntity;
+    CoturnConfigurationEntity? coturnConfigurationEntity;
 
     result.fold(
       (l) {
-        emit(state.copyWith(exception: l, isLoading: false, user: null));
+        emit(state.copyWith(exception: l, isLoading: false, userEntity: null));
       },
       (r) {
-        userModel = r;
+        userEntity = r;
       },
     );
 
     config.fold(
       (l) {
         emit(
-          state.copyWith(exception: l, isLoading: false, createRoomModel: null),
+          state.copyWith(exception: l, isLoading: false, createRoomEntity: null),
         );
       },
       (r) {
-        coturnConfigurationModel = r;
+        coturnConfigurationEntity = r;
       },
     );
 
     emit(
       state.copyWith(
-        coturnConfigurationModel: coturnConfigurationModel,
-        user: userModel,
+        coturnConfigurationEntity: coturnConfigurationEntity,
+        userEntity: userEntity,
         isLoading: false,
         exception: null,
       ),
@@ -64,12 +67,12 @@ class RemoteCubit extends Cubit<RemoteState> {
     room.fold(
       (l) {
         emit(
-          state.copyWith(exception: l, isLoading: false, createRoomModel: null),
+          state.copyWith(exception: l, isLoading: false, createRoomEntity: null),
         );
       },
       (r) {
         emit(
-          state.copyWith(createRoomModel: r, exception: null, isLoading: false),
+          state.copyWith(createRoomEntity: r, exception: null, isLoading: false),
         );
       },
     );

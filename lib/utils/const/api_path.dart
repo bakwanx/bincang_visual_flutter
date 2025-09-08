@@ -1,7 +1,7 @@
 import 'package:bincang_visual_flutter/env/env.dart';
 
 class ApiPath {
-  static AppMode appMode = AppMode.prod;
+  static AppMode appMode = AppMode.dev;
 
   // wss
   static String wsBaseUrl = _getBaseWSURL(appMode);

@@ -6,10 +6,10 @@ sealed class RemoteState with _$RemoteState{
   RemoteState._();
 
   factory RemoteState({
-    UserModel? user,
+    UserEntity? userEntity,
     Exception? exception,
-    CreateRoomModel? createRoomModel,
-    CoturnConfigurationModel? coturnConfigurationModel,
+    CreateRoomEntity? createRoomEntity,
+    CoturnConfigurationEntity? coturnConfigurationEntity,
     @Default(false) bool isLoading,
   }) = _RemoteState;
 }

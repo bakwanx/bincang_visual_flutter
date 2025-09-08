@@ -6,14 +6,14 @@ sealed class SignalingState with _$SignalingState{
   SignalingState._();
 
   factory SignalingState({
-    UserModel? user,
+    UserEntity? user,
     @Default('') String roomId,
-    @Default([]) List<ChatPayloadModel> chat,
-    @Default({}) Map<String, List<IceCandidatePayloadModel>> iceCandidates,
+    @Default([]) List<ChatPayloadEntity> chat,
+    @Default({}) Map<String, List<IceCandidatePayloadEntity>> iceCandidates,
     @Default({}) Map<String, MediaStream> remoteStream,
     @Default({}) Map<String, RTCPeerConnection> peerConnection,
     @Default('') String toastMessage,
-    CoturnConfigurationModel? coturnConfiguration,
+    CoturnConfigurationEntity? coturnConfiguration,
     MediaStream? localStream,
   }) = _SignalingState;
 }

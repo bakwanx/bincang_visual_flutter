@@ -1,11 +1,11 @@
-import 'package:bincang_visual_flutter/src/data/models/coturn_configuration_model.dart';
-import 'package:bincang_visual_flutter/src/data/models/create_room_model.dart';
-import 'package:bincang_visual_flutter/src/data/models/user_model.dart';
+import 'package:bincang_visual_flutter/src/domain/entities/coturn_configuration_entity.dart';
+import 'package:bincang_visual_flutter/src/domain/entities/create_room_entity.dart';
+import 'package:bincang_visual_flutter/src/domain/entities/user_entity.dart';
 import 'package:either_dart/either.dart';
 
 abstract class RemoteRepository {
-  Future<Either<Exception, UserModel>> registerUser(String username);
-  Future<Either<Exception, CreateRoomModel>> createRoom();
-  Future<Either<Exception, CoturnConfigurationModel>> getConfiguration();
+  Future<Either<Exception, UserEntity>> registerUser(String username);
+  Future<Either<Exception, CreateRoomEntity>> createRoom();
+  Future<Either<Exception, CoturnConfigurationEntity>> getConfiguration();
   Future<Either<Exception, void>> checkRoom(String roomId);
 }

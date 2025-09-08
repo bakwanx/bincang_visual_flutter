@@ -270,15 +270,15 @@ class _PreviewPageState extends State<PreviewPage> {
       ),
       body: BlocListener<RemoteCubit, RemoteState>(
         listener: (context, state) {
-          if (state.user != null && state.coturnConfigurationModel != null) {
+          if (state.userEntity != null && state.coturnConfigurationEntity != null) {
             context.pushReplacement(
               CallPage(
                 callEntity: CallEntity(
-                  user: state.user!,
+                  user: state.userEntity!,
                   roomId: widget.roomId,
                   micEnabled: micEnabled,
                   cameraEnabled: cameraEnabled,
-                  configurationModel: state.coturnConfigurationModel!,
+                  configurationEntity: state.coturnConfigurationEntity!,
                 ),
               ),
             );
@@ -286,9 +286,9 @@ class _PreviewPageState extends State<PreviewPage> {
         },
         listenWhen:
             (previous, current) =>
-        previous.user != current.user &&
-            previous.coturnConfigurationModel !=
-                current.coturnConfigurationModel,
+        previous.userEntity != current.userEntity &&
+            previous.coturnConfigurationEntity !=
+                current.coturnConfigurationEntity,
         child: context.isPhone() ? phoneView() : tabletView(),
       ),
     );
