@@ -1,3 +1,1 @@
-class PayloadEntity {
-
-}
+class PayloadEntity {}

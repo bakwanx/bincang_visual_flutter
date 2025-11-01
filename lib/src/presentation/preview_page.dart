@@ -33,7 +33,22 @@ class _PreviewPageState extends State<PreviewPage> {
       return;
     }
 
-    context.read<RemoteCubit>().registerUser(usernameController.text);
+    context.read<RemoteCubit>().registerUser(
+      usernameController.text,
+      onSuccess: (userEntity,coturnConfigurationEntity ) {
+        context.pushReplacement(
+          CallPage(
+            callEntity: CallEntity(
+              user: userEntity,
+              roomId: widget.roomId,
+              micEnabled: micEnabled,
+              cameraEnabled: cameraEnabled,
+              configurationEntity: coturnConfigurationEntity,
+            ),
+          ),
+        );
+      },
+    );
   }
 
   @override
@@ -100,22 +115,22 @@ class _PreviewPageState extends State<PreviewPage> {
       children: [
         Expanded(
           child:
-          cameraEnabled
-              ? ClipRRect(
-            borderRadius: BorderRadius.circular(12),
-            child: Container(
-              color: Colors.grey,
-              width: 400,
-              height: 400,
-              child: RTCVideoView(
-                localRenderer,
-                mirror: true,
-                objectFit:
-                RTCVideoViewObjectFit.RTCVideoViewObjectFitCover,
-              ),
-            ),
-          )
-              : Container(color: Colors.grey),
+              cameraEnabled
+                  ? ClipRRect(
+                    borderRadius: BorderRadius.circular(12),
+                    child: Container(
+                      color: Colors.grey,
+                      width: 400,
+                      height: 400,
+                      child: RTCVideoView(
+                        localRenderer,
+                        mirror: true,
+                        objectFit:
+                            RTCVideoViewObjectFit.RTCVideoViewObjectFitCover,
+                      ),
+                    ),
+                  )
+                  : Container(color: Colors.grey),
         ),
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -181,7 +196,7 @@ class _PreviewPageState extends State<PreviewPage> {
                       localRenderer,
                       mirror: true,
                       objectFit:
-                      RTCVideoViewObjectFit.RTCVideoViewObjectFitCover,
+                          RTCVideoViewObjectFit.RTCVideoViewObjectFitCover,
                     ),
                   ),
                 ),
@@ -199,7 +214,7 @@ class _PreviewPageState extends State<PreviewPage> {
                   FloatingActionButton(
                     heroTag: 'mic',
                     backgroundColor:
-                    micEnabled ? AppColors.secondaryColor : Colors.red,
+                        micEnabled ? AppColors.secondaryColor : Colors.red,
                     onPressed: toggleMic,
                     child: Icon(
                       micEnabled ? Icons.mic : Icons.mic_off,
@@ -210,7 +225,7 @@ class _PreviewPageState extends State<PreviewPage> {
                   FloatingActionButton(
                     heroTag: 'camera',
                     backgroundColor:
-                    cameraEnabled ? AppColors.secondaryColor : Colors.red,
+                        cameraEnabled ? AppColors.secondaryColor : Colors.red,
                     onPressed: toggleCamera,
                     child: Icon(
                       cameraEnabled ? Icons.videocam : Icons.videocam_off,
@@ -270,25 +285,17 @@ class _PreviewPageState extends State<PreviewPage> {
       ),
       body: BlocListener<RemoteCubit, RemoteState>(
         listener: (context, state) {
-          if (state.userEntity != null && state.coturnConfigurationEntity != null) {
-            context.pushReplacement(
-              CallPage(
-                callEntity: CallEntity(
-                  user: state.userEntity!,
-                  roomId: widget.roomId,
-                  micEnabled: micEnabled,
-                  cameraEnabled: cameraEnabled,
-                  configurationEntity: state.coturnConfigurationEntity!,
-                ),
-              ),
+          if(state.exception != null){
+            CustomSnackBar(
+              context: context,
+              message: state.exception.toString(),
             );
           }
+
         },
         listenWhen:
             (previous, current) =>
-        previous.userEntity != current.userEntity &&
-            previous.coturnConfigurationEntity !=
-                current.coturnConfigurationEntity,
+                previous.exception != current.exception,
         child: context.isPhone() ? phoneView() : tabletView(),
       ),
     );

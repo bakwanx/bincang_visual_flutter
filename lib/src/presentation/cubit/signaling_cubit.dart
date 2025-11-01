@@ -42,7 +42,7 @@ class SignalingCubit extends Cubit<SignalingState> {
     required this.webSocketService,
   }) : super(SignalingState());
 
-  void init({required CallEntity callEntity}) {
+  Future<void> init({required CallEntity callEntity}) async {
     emit(
       state.copyWith(
         user: callEntity.user,
@@ -50,11 +50,12 @@ class SignalingCubit extends Cubit<SignalingState> {
         coturnConfiguration: callEntity.configurationEntity,
       ),
     );
-    initWebsocket(callEntity.roomId);
-    initLocalMedia(
+    await initLocalMedia(
       cameraEnabled: callEntity.cameraEnabled,
       micEnabled: callEntity.micEnabled,
     );
+    initWebsocket(callEntity.roomId);
+
   }
 
   initWebsocket(String roomId) {
@@ -121,7 +122,7 @@ class SignalingCubit extends Cubit<SignalingState> {
   }
 
   void _pingPong() {
-    signalingUseCase.sendMessage<PingPongPayloadEntity>(
+    signalingUseCase.sendMessage(
       WebSocketMessageEntity(
         type: "pingpong",
         payload: PingPongPayloadEntity(message: "pong"),
@@ -130,7 +131,7 @@ class SignalingCubit extends Cubit<SignalingState> {
   }
 
   Future<void> requestOffer() async {
-    signalingUseCase.sendMessage<RequestOfferingPayloadEntity>(
+    signalingUseCase.sendMessage(
       WebSocketMessageEntity(
         type: "join",
         payload: RequestOfferingPayloadEntity(
@@ -182,7 +183,7 @@ class SignalingCubit extends Cubit<SignalingState> {
     };
 
     // send offer
-    signalingUseCase.sendMessage<SdpPayloadEntity>(
+    signalingUseCase.sendMessage(
       WebSocketMessageEntity(
         type: "offer",
         payload: SdpPayloadEntity(
@@ -196,7 +197,6 @@ class SignalingCubit extends Cubit<SignalingState> {
   }
 
   Future<void> sendAnswerSdp(SdpPayloadEntity sdpPayload) async {
-    // final sdpPayload = SdpPayloadModel.fromJson(webRtcMessageModel.payload);
     final remoteUser = sdpPayload.userFrom;
     final remoteUserId = remoteUser.id;
 
@@ -244,7 +244,7 @@ class SignalingCubit extends Cubit<SignalingState> {
     };
 
     // send answer
-    signalingUseCase.sendMessage<SdpPayloadEntity>(
+    signalingUseCase.sendMessage(
       WebSocketMessageEntity(
         type: "answer",
         payload: SdpPayloadEntity(
@@ -266,8 +266,6 @@ class SignalingCubit extends Cubit<SignalingState> {
       sdpPayload.typeSdp,
     );
     await state.peerConnection[userEntity.id]?.setRemoteDescription(description);
-
-    // await peerConnection[username]?.setRemoteDescription(description);
   }
 
   void _iceCandidate({
@@ -275,7 +273,7 @@ class SignalingCubit extends Cubit<SignalingState> {
     required UserEntity userFrom,
     required RTCIceCandidate candidate,
   }) {
-    signalingUseCase.sendMessage<IceCandidatePayloadEntity>(
+    signalingUseCase.sendMessage(
       WebSocketMessageEntity(
         type: "candidate",
         payload: IceCandidatePayloadEntity(
@@ -293,11 +291,6 @@ class SignalingCubit extends Cubit<SignalingState> {
     IceCandidatePayloadEntity iceCandidate,
   ) async {
     final fromUser = iceCandidate.userFrom.id;
-    // final iceCandidate = IceCandidatePayloadModel.fromJson(
-    //   webRtcMessageModel.payload,
-    // );
-
-    // state.iceCandidates.putIfAbsent(fromUser, () => []);
     final newListCandidates = state.iceCandidates[fromUser] ?? [];
     newListCandidates.add(iceCandidate);
     final peerAddCandidate = state.peerConnection[fromUser];
@@ -332,7 +325,7 @@ class SignalingCubit extends Cubit<SignalingState> {
   }
 
   void leave() {
-    signalingUseCase.sendMessage<LeavePayloadEntity>(
+    signalingUseCase.sendMessage(
       WebSocketMessageEntity(
         type: "leave",
         payload: LeavePayloadEntity(roomId: state.roomId, user: state.user!),
@@ -453,12 +446,6 @@ class SignalingCubit extends Cubit<SignalingState> {
     pc?.onIceGatheringState = (RTCIceGatheringState state) {
       debugPrint('ICE connection state change: $state');
     };
-
-    // pc?.onAddStream = (MediaStream stream) {
-    //   print("Add remote stream");
-    //   onAddRemoteStream[username]?.call(stream);
-    //   remoteStream[username] = stream;
-    // };
   }
 
   Future<void> sendChat(String message) async {
@@ -467,7 +454,7 @@ class SignalingCubit extends Cubit<SignalingState> {
       userFrom: state.user!,
       message: message,
     );
-    signalingUseCase.sendMessage<ChatPayloadEntity>(
+    signalingUseCase.sendMessage(
       WebSocketMessageEntity(
         type: "chat",
         payload: chat,

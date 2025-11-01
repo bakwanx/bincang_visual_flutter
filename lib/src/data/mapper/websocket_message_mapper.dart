@@ -23,26 +23,26 @@ import 'package:bincang_visual_flutter/src/domain/entities/websocket_message_ent
 import 'package:flutter/cupertino.dart';
 
 extension WebsocketMessageMapper on WebSocketMessageModel {
-  WebSocketMessageEntity toEntity<T extends PayloadModel>() {
+  WebSocketMessageEntity toEntity() {
     final dataPayload = payload;
     dynamic dataMapper;
-    if(T is PingPongPayloadModel){
-      dataMapper = (dataPayload as PingPongPayloadModel).toEntity();
+    if(dataPayload is PingPongPayloadModel){
+      dataMapper = dataPayload.toEntity();
     }
-    if(T is RequestOfferingPayloadModel){
-      dataMapper = (dataPayload as RequestOfferingPayloadModel).toEntity();
+    if(dataPayload is RequestOfferingPayloadModel){
+      dataMapper = dataPayload.toEntity();
     }
-    if(T is SdpPayloadModel){
-      dataMapper = (dataPayload as SdpPayloadModel).toEntity();
+    if(dataPayload is SdpPayloadModel){
+      dataMapper = dataPayload.toEntity();
     }
-    if(T is IceCandidatePayloadModel){
-      dataMapper = (dataPayload as IceCandidatePayloadModel).toEntity();
+    if(dataPayload is IceCandidatePayloadModel){
+      dataMapper = dataPayload.toEntity();
     }
-    if(T is ChatPayloadModel){
-      dataMapper = (dataPayload as ChatPayloadModel).toEntity();
+    if(dataPayload is ChatPayloadModel){
+      dataMapper = dataPayload.toEntity();
     }
-    if(T is LeavePayloadModel){
-      dataMapper = (dataPayload as LeavePayloadModel).toEntity();
+    if(dataPayload is LeavePayloadModel){
+      dataMapper = dataPayload.toEntity();
     }
 
     return WebSocketMessageEntity(
@@ -53,28 +53,26 @@ extension WebsocketMessageMapper on WebSocketMessageModel {
 }
 
 extension WebsocketMessageToModelMapper on WebSocketMessageEntity {
-  WebSocketMessageModel toModel<T extends PayloadEntity>() {
+  WebSocketMessageModel toModel() {
     final dataPayload = payload;
     dynamic dataMapper;
-    if(T is PingPongPayloadEntity){
-      debugPrint("pesan pingpong");
-      dataMapper = (dataPayload as PingPongPayloadEntity).toModel();
+
+    if (dataPayload is PingPongPayloadEntity) {
+      dataMapper = dataPayload.toModel();
+    } else if (dataPayload is RequestOfferingPayloadEntity) {
+      dataMapper = dataPayload.toModel();
+    } else if (dataPayload is SdpPayloadEntity) {
+      dataMapper = dataPayload.toModel();
+    } else if (dataPayload is IceCandidatePayloadEntity) {
+      dataMapper = dataPayload.toModel();
+    } else if (dataPayload is ChatPayloadEntity) {
+      dataMapper = dataPayload.toModel();
+    } else if (dataPayload is LeavePayloadEntity) {
+      dataMapper = dataPayload.toModel();
+    } else {
+      debugPrint('Unknown payload type: ${dataPayload.runtimeType}');
     }
-    if(T is RequestOfferingPayloadEntity){
-      dataMapper = (dataPayload as RequestOfferingPayloadEntity).toModel();
-    }
-    if(T is SdpPayloadEntity){
-      dataMapper = (dataPayload as SdpPayloadEntity).toModel();
-    }
-    if(T is IceCandidatePayloadEntity){
-      dataMapper = (dataPayload as IceCandidatePayloadEntity).toModel();
-    }
-    if(T is ChatPayloadEntity){
-      dataMapper = (dataPayload as ChatPayloadEntity).toModel();
-    }
-    if(T is LeavePayloadModel){
-      dataMapper = (dataPayload as LeavePayloadEntity).toModel();
-    }
+
     return WebSocketMessageModel(
       type: type,
       payload: dataMapper,
