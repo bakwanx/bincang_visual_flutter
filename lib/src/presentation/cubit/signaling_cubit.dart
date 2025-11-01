@@ -1,9 +1,22 @@
+import 'package:bincang_visual_flutter/src/data/mapper/chat_payload_mapper.dart';
+import 'package:bincang_visual_flutter/src/data/mapper/ice_candidate_payload_mapper.dart';
+import 'package:bincang_visual_flutter/src/data/mapper/leave_payload_mapper.dart';
+import 'package:bincang_visual_flutter/src/data/mapper/request_offering_mapper.dart';
+import 'package:bincang_visual_flutter/src/data/mapper/sdp_payload_mapper.dart';
+import 'package:bincang_visual_flutter/src/data/mapper/user_mapper.dart';
 import 'package:bincang_visual_flutter/src/data/models/chat_payload_model.dart';
-import 'package:bincang_visual_flutter/src/data/models/coturn_configuration_model.dart';
 import 'package:bincang_visual_flutter/src/data/models/leave_payload_model.dart';
 import 'package:bincang_visual_flutter/src/data/models/ping_payload_model.dart';
-import 'package:bincang_visual_flutter/src/data/models/user_model.dart';
 import 'package:bincang_visual_flutter/src/domain/entities/call_entity.dart';
+import 'package:bincang_visual_flutter/src/domain/entities/chat_payload_entity.dart';
+import 'package:bincang_visual_flutter/src/domain/entities/coturn_configuration_entity.dart';
+import 'package:bincang_visual_flutter/src/domain/entities/ice_candidate_payload_entity.dart';
+import 'package:bincang_visual_flutter/src/domain/entities/leave_payload_entity.dart';
+import 'package:bincang_visual_flutter/src/domain/entities/ping_payload_entity.dart';
+import 'package:bincang_visual_flutter/src/domain/entities/request_offering_payload_entity.dart';
+import 'package:bincang_visual_flutter/src/domain/entities/sdp_payload_entity.dart';
+import 'package:bincang_visual_flutter/src/domain/entities/user_entity.dart';
+import 'package:bincang_visual_flutter/src/domain/entities/websocket_message_entity.dart';
 import 'package:bincang_visual_flutter/src/domain/usecase/signaling_usecase.dart';
 import 'package:bincang_visual_flutter/utils/log/print_debug_log.dart';
 import 'package:bincang_visual_flutter/utils/theme/app_toast.dart';
@@ -16,7 +29,6 @@ import '../../../../infrastructure/websocket_service.dart';
 import '../../data/models/ice_candidate_payload_model.dart';
 import '../../data/models/request_offering_model.dart';
 import '../../data/models/sdp_payload_model.dart';
-import '../../data/models/websocket_message_model.dart';
 
 part 'signaling_cubit.freezed.dart';
 part 'signaling_state.dart';
@@ -30,19 +42,20 @@ class SignalingCubit extends Cubit<SignalingState> {
     required this.webSocketService,
   }) : super(SignalingState());
 
-  void init({required CallEntity callEntity}) {
+  Future<void> init({required CallEntity callEntity}) async {
     emit(
       state.copyWith(
         user: callEntity.user,
         roomId: callEntity.roomId,
-        coturnConfiguration: callEntity.configurationModel,
+        coturnConfiguration: callEntity.configurationEntity,
       ),
     );
-    initWebsocket(callEntity.roomId);
-    initLocalMedia(
+    await initLocalMedia(
       cameraEnabled: callEntity.cameraEnabled,
       micEnabled: callEntity.micEnabled,
     );
+    initWebsocket(callEntity.roomId);
+
   }
 
   initWebsocket(String roomId) {
@@ -64,37 +77,37 @@ class SignalingCubit extends Cubit<SignalingState> {
           _pingPong();
           break;
         case "join":
-          final requestOfferring = RequestOfferingModel.fromJson(
+          final requestOfferring = RequestOfferingPayloadModel.fromJson(
             message.payload,
           );
           // // send offer
           printDebugLog(tag: _tag, message: "receive a request join: ${requestOfferring.toJson()}");
-          offerSdp(requestOfferring);
+          offerSdp(requestOfferring.toEntity());
           break;
         case "offer":
           // // answer the offer
           final sdpPayload = SdpPayloadModel.fromJson(message.payload);
           printDebugLog(tag: _tag, message: "receive an offer: ${sdpPayload.toJson()}");
-          sendAnswerSdp(sdpPayload);
-          setRemoteSdp(sdpPayload.userFrom, sdpPayload);
+          sendAnswerSdp(sdpPayload.toEntity());
+          setRemoteSdp(sdpPayload.userFrom.toEntity(), sdpPayload.toEntity());
           break;
         case "answer":
           final sdpPayload = SdpPayloadModel.fromJson(message.payload);
           printDebugLog(tag: _tag, message: "receive an answer: ${sdpPayload.toJson()}");
           // // set answer
-          setRemoteSdp(sdpPayload.userFrom, sdpPayload);
+          setRemoteSdp(sdpPayload.userFrom.toEntity(), sdpPayload.toEntity());
           break;
         case "candidate":
           final iceCandidate = IceCandidatePayloadModel.fromJson(
             message.payload,
           );
           printDebugLog(tag: _tag, message: "receive a candidate: ${iceCandidate.toJson()}");
-          collectIceCandidates(iceCandidate);
+          collectIceCandidates(iceCandidate.toEntity());
           break;
         case 'chat':
           final chatPayloadModel = ChatPayloadModel.fromJson(message.payload);
           printDebugLog(tag: _tag, message: "receive a chat message: ${chatPayloadModel.toJson()}");
-          receiveChat(chatPayloadModel);
+          receiveChat(chatPayloadModel.toEntity());
           break;
         case 'leave':
           final leavePayloadModel = LeavePayloadModel.fromJson(message.payload);
@@ -102,7 +115,7 @@ class SignalingCubit extends Cubit<SignalingState> {
           AppToast.showToast(
             message: "${leavePayloadModel.user.username} has left the meeting",
           );
-          removeRemoteUserConnection(leavePayloadModel);
+          removeRemoteUserConnection(leavePayloadModel.toEntity());
           break;
       }
     });
@@ -110,18 +123,18 @@ class SignalingCubit extends Cubit<SignalingState> {
 
   void _pingPong() {
     signalingUseCase.sendMessage(
-      WebSocketMessageModel(
+      WebSocketMessageEntity(
         type: "pingpong",
-        payload: PingPongPayloadModel(message: "pong"),
+        payload: PingPongPayloadEntity(message: "pong"),
       ),
     );
   }
 
   Future<void> requestOffer() async {
     signalingUseCase.sendMessage(
-      WebSocketMessageModel(
+      WebSocketMessageEntity(
         type: "join",
-        payload: RequestOfferingModel(
+        payload: RequestOfferingPayloadEntity(
           roomId: state.roomId,
           userRequest: state.user!,
         ),
@@ -129,7 +142,7 @@ class SignalingCubit extends Cubit<SignalingState> {
     );
   }
 
-  Future<void> offerSdp(RequestOfferingModel req) async {
+  Future<void> offerSdp(RequestOfferingPayloadEntity req) async {
     RTCPeerConnection pc = await createPeerConnection(
       state.coturnConfiguration!.toJson(),
     );
@@ -171,9 +184,9 @@ class SignalingCubit extends Cubit<SignalingState> {
 
     // send offer
     signalingUseCase.sendMessage(
-      WebSocketMessageModel(
+      WebSocketMessageEntity(
         type: "offer",
-        payload: SdpPayloadModel(
+        payload: SdpPayloadEntity(
           sdp: offer.sdp!,
           typeSdp: offer.type!,
           userFrom: state.user!,
@@ -183,8 +196,7 @@ class SignalingCubit extends Cubit<SignalingState> {
     );
   }
 
-  Future<void> sendAnswerSdp(SdpPayloadModel sdpPayload) async {
-    // final sdpPayload = SdpPayloadModel.fromJson(webRtcMessageModel.payload);
+  Future<void> sendAnswerSdp(SdpPayloadEntity sdpPayload) async {
     final remoteUser = sdpPayload.userFrom;
     final remoteUserId = remoteUser.id;
 
@@ -233,9 +245,9 @@ class SignalingCubit extends Cubit<SignalingState> {
 
     // send answer
     signalingUseCase.sendMessage(
-      WebSocketMessageModel(
+      WebSocketMessageEntity(
         type: "answer",
-        payload: SdpPayloadModel(
+        payload: SdpPayloadEntity(
           sdp: answer.sdp!,
           typeSdp: answer.type!,
           userFrom: state.user!,
@@ -246,27 +258,25 @@ class SignalingCubit extends Cubit<SignalingState> {
   }
 
   Future<void> setRemoteSdp(
-    UserModel userModel,
-    SdpPayloadModel sdpPayload,
+    UserEntity userEntity,
+    SdpPayloadEntity sdpPayload,
   ) async {
     final description = RTCSessionDescription(
       sdpPayload.sdp,
       sdpPayload.typeSdp,
     );
-    await state.peerConnection[userModel.id]?.setRemoteDescription(description);
-
-    // await peerConnection[username]?.setRemoteDescription(description);
+    await state.peerConnection[userEntity.id]?.setRemoteDescription(description);
   }
 
   void _iceCandidate({
-    required UserModel userTarget,
-    required UserModel userFrom,
+    required UserEntity userTarget,
+    required UserEntity userFrom,
     required RTCIceCandidate candidate,
   }) {
     signalingUseCase.sendMessage(
-      WebSocketMessageModel(
+      WebSocketMessageEntity(
         type: "candidate",
-        payload: IceCandidatePayloadModel(
+        payload: IceCandidatePayloadEntity(
           candidate: candidate.candidate!,
           sdpMLineIndex: candidate.sdpMLineIndex!,
           sdpMid: candidate.sdpMid!,
@@ -278,14 +288,9 @@ class SignalingCubit extends Cubit<SignalingState> {
   }
 
   Future<void> collectIceCandidates(
-    IceCandidatePayloadModel iceCandidate,
+    IceCandidatePayloadEntity iceCandidate,
   ) async {
     final fromUser = iceCandidate.userFrom.id;
-    // final iceCandidate = IceCandidatePayloadModel.fromJson(
-    //   webRtcMessageModel.payload,
-    // );
-
-    // state.iceCandidates.putIfAbsent(fromUser, () => []);
     final newListCandidates = state.iceCandidates[fromUser] ?? [];
     newListCandidates.add(iceCandidate);
     final peerAddCandidate = state.peerConnection[fromUser];
@@ -321,9 +326,9 @@ class SignalingCubit extends Cubit<SignalingState> {
 
   void leave() {
     signalingUseCase.sendMessage(
-      WebSocketMessageModel(
+      WebSocketMessageEntity(
         type: "leave",
-        payload: LeavePayloadModel(roomId: state.roomId, user: state.user!),
+        payload: LeavePayloadEntity(roomId: state.roomId, user: state.user!),
       ),
     );
     for (final pc in state.peerConnection.values) {
@@ -360,10 +365,10 @@ class SignalingCubit extends Cubit<SignalingState> {
     requestOffer();
   }
 
-  void removeRemoteUserConnection(LeavePayloadModel leavePayloadModel) {
-    final remoteUser = leavePayloadModel.user.id;
+  void removeRemoteUserConnection(LeavePayloadEntity leavePayloadEntity) {
+    final remoteUser = leavePayloadEntity.user.id;
     final remoteStreams = Map<String, MediaStream>.from(state.remoteStream);
-    final iceCandidates = Map<String, List<IceCandidatePayloadModel>>.from(
+    final iceCandidates = Map<String, List<IceCandidatePayloadEntity>>.from(
       state.iceCandidates,
     );
     final peerConnections = Map<String, RTCPeerConnection>.from(
@@ -373,9 +378,9 @@ class SignalingCubit extends Cubit<SignalingState> {
     peerConnections[remoteUser]?.close();
     remoteStreams[remoteUser]?.getTracks().forEach((t) => t.stop());
 
-    remoteStreams.remove(leavePayloadModel.user.id);
-    iceCandidates.remove(leavePayloadModel.user.id);
-    peerConnections.remove(leavePayloadModel.user.id);
+    remoteStreams.remove(leavePayloadEntity.user.id);
+    iceCandidates.remove(leavePayloadEntity.user.id);
+    peerConnections.remove(leavePayloadEntity.user.id);
     emit(
       state.copyWith(
         remoteStream: remoteStreams,
@@ -441,22 +446,16 @@ class SignalingCubit extends Cubit<SignalingState> {
     pc?.onIceGatheringState = (RTCIceGatheringState state) {
       debugPrint('ICE connection state change: $state');
     };
-
-    // pc?.onAddStream = (MediaStream stream) {
-    //   print("Add remote stream");
-    //   onAddRemoteStream[username]?.call(stream);
-    //   remoteStream[username] = stream;
-    // };
   }
 
   Future<void> sendChat(String message) async {
-    final chat = ChatPayloadModel(
+    final chat = ChatPayloadEntity(
       roomId: state.roomId,
       userFrom: state.user!,
       message: message,
     );
     signalingUseCase.sendMessage(
-      WebSocketMessageModel(
+      WebSocketMessageEntity(
         type: "chat",
         payload: chat,
       ),
@@ -466,7 +465,7 @@ class SignalingCubit extends Cubit<SignalingState> {
     ));
   }
 
-  Future<void> receiveChat(ChatPayloadModel chat) async {
+  Future<void> receiveChat(ChatPayloadEntity chat) async {
     emit(state.copyWith(
       chat: [...state.chat, chat]
     ));

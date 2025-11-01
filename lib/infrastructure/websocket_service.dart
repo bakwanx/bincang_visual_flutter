@@ -23,6 +23,7 @@ class WebSocketService {
   Future<void> connect({required String userId, required String roomId}) async {
     _userId = userId;
     _roomId = roomId;
+
     final uri = Uri.parse(
       ApiPath.wsBaseUrl,
     ).replace(queryParameters: {'userId': _userId, 'roomId': _roomId});

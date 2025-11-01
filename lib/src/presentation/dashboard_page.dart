@@ -147,13 +147,13 @@ class _DashboardPageUIState extends State<DashboardPageUI> {
     Widget newMeetingOrJoin() {
       return BlocListener<RemoteCubit, RemoteState>(
         listener: (context, state) {
-          roomCreatedDialog(state.createRoomModel!.data.roomId);
+          roomCreatedDialog(state.createRoomEntity!.data.roomId);
         },
         listenWhen:
             (previous, current) =>
                 previous != current &&
-                previous.createRoomModel != current.createRoomModel &&
-                current.createRoomModel != null,
+                previous.createRoomEntity != current.createRoomEntity &&
+                current.createRoomEntity != null,
         child: BlocBuilder<RemoteCubit, RemoteState>(
           builder: (context, state) {
             if (state.isLoading) {

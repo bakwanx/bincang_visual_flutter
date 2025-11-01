@@ -1,6 +1,7 @@
+import 'package:bincang_visual_flutter/src/data/models/payload_model.dart';
 import 'package:bincang_visual_flutter/src/data/models/user_model.dart';
 
-class SdpPayloadModel {
+class SdpPayloadModel extends PayloadModel {
   String sdp;
   String typeSdp;
   UserModel userFrom;
