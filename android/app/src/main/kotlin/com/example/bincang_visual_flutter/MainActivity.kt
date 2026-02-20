@@ -1,4 +1,4 @@
-package com.example.bincang_visual_flutter
+package com.bincang_visual_flutter.id
 
 import io.flutter.embedding.android.FlutterActivity
 
