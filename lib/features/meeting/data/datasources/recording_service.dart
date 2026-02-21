@@ -3,6 +3,7 @@ import 'dart:html' as html;
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter_webrtc/flutter_webrtc.dart';
 import '../../../../core/error/exceptions.dart';
+import '../../../../utils/log/print_debug_log.dart';
 
 class RecordingService {
   html.MediaRecorder? _mediaRecorder;
@@ -53,7 +54,7 @@ class RecordingService {
 
       _startDurationTimer();
 
-      print('[RecordingService] Recording started');
+      printDebugLog(tag: 'RecordingService', message: 'Recording started');
     } catch (e) {
       throw WebRTCException('Failed to start recording: $e');
     }
@@ -74,7 +75,7 @@ class RecordingService {
     _mediaRecorder!.stop();
     _mediaRecorder = null;
 
-    print('[RecordingService] Recording stopped');
+    printDebugLog(tag: 'RecordingService', message: 'Recording stopped');
 
     return completer.future;
   }
@@ -104,7 +105,7 @@ class RecordingService {
         throw Exception('Failed to upload chunk: ${request.statusText}');
       }
     } catch (e) {
-      print('[RecordingService] Failed to upload chunk: $e');
+      printDebugLog(tag: 'RecordingService', message: 'Failed to upload chunk: $e');
     }
   }
 

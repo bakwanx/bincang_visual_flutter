@@ -3,6 +3,7 @@ import 'dart:ui';
 import 'package:bincang_visual_flutter/features/meeting/domain/entities/meeting_entities.dart';
 import 'package:flutter_webrtc/flutter_webrtc.dart';
 import '../../../../core/error/exceptions.dart';
+import '../utils/log/print_debug_log.dart';
 
 class WebRTCService {
   final Map<String, RTCPeerConnection> _peerConnections = {};
@@ -137,16 +138,22 @@ class WebRTCService {
         if (screenTrack != null) {
           final sender = await pc.addTrack(screenTrack, _screenStream!);
           _screenShareSenders[peerId] = sender;
-          print('[$peerId] Added existing screen share track');
+          printDebugLog(
+            tag: '$peerId',
+            message: 'Added existing screen share track',
+          );
         }
       }
 
-
       pc.onTrack = (RTCTrackEvent event) {
-        print('[$peerId] onTrack: kind=${event.track.kind}, trackId=${event.track.id}');
+        printDebugLog(
+          tag: '$peerId',
+          message:
+              'onTrack: kind=${event.track.kind}, trackId=${event.track.id}',
+        );
 
         if (event.streams.isEmpty) {
-          print('[$peerId]  No streams in track event');
+          printDebugLog(tag: '$peerId', message: 'No streams in track event');
           return;
         }
 
@@ -160,9 +167,12 @@ class WebRTCService {
           final existingCamera = _remoteStreams[peerId];
           final existingScreen = _screenShareStreams[peerId];
 
-
           if (existingCamera?.id == streamId) {
-            print('[$peerId] 🔄 Camera stream updated (track toggle), keeping existing stream');
+            printDebugLog(
+              tag: '$peerId',
+              message:
+                  'Camera stream updated (track toggle), keeping existing stream',
+            );
 
             _remoteStreams[peerId] = stream;
             _remoteStreamController.add(Map.from(_remoteStreams));
@@ -170,52 +180,64 @@ class WebRTCService {
           }
 
           if (existingScreen?.id == streamId) {
-            print('[$peerId] 🔄 Screen share stream updated, keeping existing stream');
+            printDebugLog(
+              tag: '$peerId',
+              message: 'Screen share stream updated, keeping existing stream',
+            );
             _screenShareStreams[peerId] = stream;
             _screenShareStreamController.add(Map.from(_screenShareStreams));
             continue;
           }
 
-
           if (_processedStreamIds[peerId]!.contains(streamId)) {
-            print('[$peerId] ⏭️ Stream $streamId already processed, skipping');
+            printDebugLog(
+              tag: '$peerId',
+              message: 'Stream $streamId already processed, skipping',
+            );
             continue;
           }
 
           _processedStreamIds[peerId]!.add(streamId);
 
-          print('[$peerId] 📺 New stream: $streamId');
-
+          printDebugLog(tag: '$peerId', message: 'New stream: $streamId');
 
           final hasAudio = stream.getAudioTracks().isNotEmpty;
           final hasVideo = stream.getVideoTracks().isNotEmpty;
           final hasCamera = _remoteStreams.containsKey(peerId);
 
-          print('[$peerId] Stream analysis: hasAudio=$hasAudio, hasVideo=$hasVideo, hasCamera=$hasCamera');
+          printDebugLog(
+            tag: peerId,
+            message:
+                'Stream analysis: hasAudio=$hasAudio, hasVideo=$hasVideo, hasCamera=$hasCamera',
+          );
 
           if (!hasCamera) {
-            // First stream = camera (regardless of audio state, in case mic is off)
-            print('[$peerId] Added CAMERA stream');
+            // first stream = camera (regardless of audio state, in case mic is off)
+            printDebugLog(tag: peerId, message: 'Added CAMERA stream');
             _remoteStreams[peerId] = stream;
             _remoteStreamController.add(Map.from(_remoteStreams));
           } else if (hasCamera && hasVideo && !hasAudio) {
-            // Second stream with video but no audio = screen share
-            print('[$peerId] Added SCREEN SHARE stream');
+            // second stream with video but no audio = screen share
+            printDebugLog(tag: peerId, message: 'Added SCREEN SHARE stream');
             _screenShareStreams[peerId] = stream;
             _screenShareStreamController.add(Map.from(_screenShareStreams));
           } else {
-            print('[$peerId]️ Unexpected stream configuration, skipping');
+            printDebugLog(
+              tag: peerId,
+              message: 'Unexpected stream configuration, skipping',
+            );
           }
         }
       };
 
       pc.onRemoveTrack = (stream, track) {
-        print(
-          '[$peerId]️ onRemoveTrack: trackId=${track.id}, streamId=${stream.id}',
+        printDebugLog(
+          tag: peerId,
+          message: 'onRemoveTrack: trackId=${track.id}, streamId=${stream.id}',
         );
 
         if (_screenShareStreams[peerId]?.id == stream.id) {
-          print('[$peerId] Removing screen share stream');
+          printDebugLog(tag: peerId, message: 'Removing screen share stream');
           _screenShareStreams.remove(peerId);
           _screenShareStreamController.add(Map.from(_screenShareStreams));
         }
@@ -226,7 +248,7 @@ class WebRTCService {
       };
 
       pc.onIceConnectionState = (RTCIceConnectionState state) {
-        print('[$peerId] ICE Connection State: $state');
+        printDebugLog(tag: peerId, message: 'ICE Connection State: $state');
         _iceConnectionStateController.add({peerId: state});
 
         switch (state) {
@@ -299,14 +321,17 @@ class WebRTCService {
   Future<void> addIceCandidate(String peerId, RTCIceCandidate candidate) async {
     final pc = _peerConnections[peerId];
     if (pc == null) {
-      print('[$peerId] Peer connection not found, cannot add ICE candidate');
+      printDebugLog(
+        tag: peerId,
+        message: 'Peer connection not found, cannot add ICE candidate',
+      );
       return;
     }
 
     try {
       await pc.addCandidate(candidate);
     } catch (e) {
-      print('[$peerId] Failed to add ICE candidate: $e');
+      printDebugLog(tag: peerId, message: 'Failed to add ICE candidate: $e');
     }
   }
 
@@ -343,7 +368,10 @@ class WebRTCService {
         'audio': false,
       });
 
-      print('[WebRTC] Screen share stream created: ${_screenStream!.id}');
+      printDebugLog(
+        tag: 'WebRTC',
+        message: 'Screen share stream created: ${_screenStream!.id}',
+      );
 
       final screenTrack = _screenStream!.getVideoTracks()[0];
       final offersToSend = <String, RTCSessionDescription>{};
@@ -355,31 +383,33 @@ class WebRTCService {
         try {
           final sender = await pc.addTrack(screenTrack, _screenStream!);
           _screenShareSenders[peerId] = sender;
-          print('[$peerId] Added screen share track');
+          printDebugLog(tag: peerId, message: 'Added screen share track');
 
           final offer = await pc.createOffer();
           await pc.setLocalDescription(offer);
 
           offersToSend[peerId] = offer;
 
-          print('[$peerId] Created renegotiation offer');
+          printDebugLog(tag: peerId, message: 'Created renegotiation offer');
         } catch (e) {
-          print('[$peerId] Failed to add screen share track: $e');
+          printDebugLog(
+            tag: peerId,
+            message: 'Failed to add screen share track: $e',
+          );
         }
       }
 
       if (_localUserId != null) {
         _screenShareStreams[_localUserId!] = _screenStream!;
         _screenShareStreamController.add(Map.from(_screenShareStreams));
-        print('[WebRTC] Added LOCAL screen share to own view');
+        printDebugLog(tag: 'WebRTC', message: 'Added LOCAL screen share to own view');
       }
 
       screenTrack.onEnded = () async {
-        print('[WebRTC] Screen share ended by user');
+        printDebugLog(tag: 'WebRTC', message: 'Screen share ended by user');
         await stopScreenShare();
         try {
           await stopScreenShare();
-
 
           if (_localUserId != null) {
             if (onBrowserStopShare != null) {
@@ -387,7 +417,7 @@ class WebRTCService {
             }
           }
         } catch (e) {
-          print('[WebRTC] Error stopping screen share: $e');
+          printDebugLog(tag: 'WebRTC', message: 'Error stopping screen share: $e');
         }
       };
 
@@ -401,7 +431,7 @@ class WebRTCService {
   Future<Map<String, RTCSessionDescription>> stopScreenShare() async {
     if (_screenStream == null) return {};
 
-    print('[WebRTC] Stopping screen share');
+    printDebugLog(tag: 'WebRTC', message: 'Stopping screen share');
 
     _screenStream!.getTracks().forEach((track) {
       track.stop();
@@ -417,16 +447,22 @@ class WebRTCService {
       if (pc != null) {
         try {
           await pc.removeTrack(sender);
-          print('[$peerId] Removed screen share track');
+          printDebugLog(tag: peerId, message: 'Removed screen share track');
 
           final offer = await pc.createOffer();
           await pc.setLocalDescription(offer);
 
           offersToSend[peerId] = offer;
 
-          print('[$peerId] Created renegotiation offer (stop)');
+          printDebugLog(
+            tag: peerId,
+            message: 'Created renegotiation offer (stop)',
+          );
         } catch (e) {
-          print('[$peerId] Failed to remove screen share track: $e');
+          printDebugLog(
+            tag: peerId,
+            message: 'Failed to remove screen share track: $e',
+          );
         }
       }
     }
@@ -436,7 +472,7 @@ class WebRTCService {
     if (_localUserId != null) {
       _screenShareStreams.remove(_localUserId!);
       _screenShareStreamController.add(Map.from(_screenShareStreams));
-      print('[WebRTC] Removed LOCAL screen share');
+      printDebugLog(tag: 'WebRTC', message: 'Removed LOCAL screen share');
     }
 
     _screenStream = null;
@@ -444,7 +480,10 @@ class WebRTCService {
   }
 
   Future<void> _handleIceConnectionFailure(String peerId) async {
-    print('[$peerId] ICE connection failed, attempting ICE restart');
+    printDebugLog(
+      tag: peerId,
+      message: 'ICE connection failed, attempting ICE restart',
+    );
     final pc = _peerConnections[peerId];
     if (pc == null) return;
 
@@ -452,12 +491,15 @@ class WebRTCService {
       final offer = await pc.createOffer({'iceRestart': true});
       await pc.setLocalDescription(offer);
     } catch (e) {
-      print('[$peerId] ICE restart failed: $e');
+      printDebugLog(tag: peerId, message: 'ICE restart failed: $e');
     }
   }
 
   void _handleIceDisconnection(String peerId) {
-    print('[$peerId] ICE disconnected, monitoring for reconnection');
+    printDebugLog(
+      tag: peerId,
+      message: 'ICE disconnected, monitoring for reconnection',
+    );
     Future.delayed(const Duration(seconds: 5), () {
       final pc = _peerConnections[peerId];
       if (pc != null &&
@@ -535,7 +577,7 @@ class WebRTCService {
   void removeScreenShareStream(String peerId) {
     if (_screenShareStreams.remove(peerId) != null) {
       _screenShareStreamController.add(Map.from(_screenShareStreams));
-      print('[WebRTC] Manually removed screen share for $peerId');
+      printDebugLog(tag: 'WebRTC', message: 'Manually removed screen share for $peerId');
     }
   }
 

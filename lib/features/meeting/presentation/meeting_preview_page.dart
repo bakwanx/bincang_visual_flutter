@@ -63,7 +63,6 @@ class _MeetingPreviewPageState extends State<MeetingPreviewPage> {
         _previewRenderer.srcObject = stream;
       });
     } catch (e) {
-      print('Preview error: $e');
       setState(() {
         _errorMessage = 'Camera/microphone access denied';
       });

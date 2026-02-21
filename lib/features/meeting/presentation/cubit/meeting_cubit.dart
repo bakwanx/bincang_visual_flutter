@@ -4,6 +4,7 @@ import 'package:bincang_visual_flutter/core/usecase/usecase.dart';
 import 'package:bincang_visual_flutter/infrastructure/webrtc_service.dart';
 import 'package:bincang_visual_flutter/infrastructure/websocket_service.dart';
 import 'package:bincang_visual_flutter/features/meeting/domain/entities/meeting_entities.dart';
+import 'package:bincang_visual_flutter/utils/log/print_debug_log.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:equatable/equatable.dart';
 import 'package:flutter_webrtc/flutter_webrtc.dart';
@@ -104,7 +105,10 @@ class MeetingCubit extends Cubit<MeetingState> {
       );
       webrtcService.setLocalUserId(_localUserId);
       webrtcService.onBrowserStopShare = () {
-        print('[MeetingCubit] Browser stop button clicked');
+        printDebugLog(
+          tag: 'MeetingCubit',
+          message: 'Browser stop button clicked',
+        );
         _handleBrowserStopShare();
       };
 
@@ -126,7 +130,10 @@ class MeetingCubit extends Cubit<MeetingState> {
         ),
       );
 
-      print('[MeetingCubit] Successfully joined meeting: $roomId');
+      printDebugLog(
+        tag: 'MeetingCubit',
+        message: 'Successfully joined meeting: $roomId',
+      );
     } catch (e) {
       emit(MeetingError('Failed to join meeting: ${e.toString()}'));
     }
@@ -155,10 +162,16 @@ class MeetingCubit extends Cubit<MeetingState> {
       states,
     ) {
       states.forEach((peerId, state) {
-        print('[MeetingCubit] Peer $peerId connection state: $state');
+        printDebugLog(
+          tag: 'MeetingCubit',
+          message: 'Peer $peerId connection state: $state',
+        );
 
         if (state == RTCIceConnectionState.RTCIceConnectionStateFailed) {
-          print('[MeetingCubit] Peer $peerId connection failed');
+          printDebugLog(
+            tag: 'MeetingCubit',
+            message: 'Peer $peerId connection failed',
+          );
         }
       });
     });
@@ -191,8 +204,9 @@ class MeetingCubit extends Cubit<MeetingState> {
     SignalMessage message,
     RoomConfig config,
   ) async {
-    print(
-      '[MeetingCubit] Received signal: ${message.type} from ${message.from}',
+    printDebugLog(
+      tag: 'MeetingCubit',
+      message: 'Received signal: ${message.type} from ${message.from}',
     );
 
     switch (message.type) {
@@ -233,7 +247,10 @@ class MeetingCubit extends Cubit<MeetingState> {
         break;
 
       default:
-        print('[MeetingCubit] Unhandled signal type: ${message.type}');
+        printDebugLog(
+          tag: 'MeetingCubit',
+          message: 'Unhandled signal type: ${message.type}',
+        );
     }
   }
 
@@ -242,7 +259,7 @@ class MeetingCubit extends Cubit<MeetingState> {
     RoomConfig config,
   ) async {
     final peerId = message.from; // userId from
-    print('[MeetingCubit]  Peer joined: $peerId');
+    printDebugLog(tag: 'MeetingCubit', message: ' Peer joined: $peerId');
 
     _updateParticipantsList(message);
 
@@ -272,15 +289,20 @@ class MeetingCubit extends Cubit<MeetingState> {
         message.data!['displayName'] as String? ?? 'Participant';
     final isRenegotiate = message.data!['renegotiate'] as bool? ?? false;
 
-    print(
-      '[MeetingCubit] Received ${isRenegotiate ? "renegotiation" : "initial"} offer from: $peerId',
+    printDebugLog(
+      tag: 'MeetingCubit',
+      message:
+          'Received ${isRenegotiate ? "renegotiation" : "initial"} offer from: $peerId',
     );
 
     if (!isRenegotiate && message.data != null) {
       final state = this.state;
       if (state is MeetingJoined) {
         if (!state.participants.any((p) => p.userId == peerId)) {
-          print('[MeetingCubit] Adding participant from offer: $displayName');
+          printDebugLog(
+            tag: 'MeetingCubit',
+            message: 'Adding participant from offer: $displayName',
+          );
 
           final participant = Participant(
             userId: peerId,
@@ -304,8 +326,9 @@ class MeetingCubit extends Cubit<MeetingState> {
         );
 
         if (wasSharing) {
-          print(
-            '[MeetingCubit] ⏳ Peer $peerId was sharing, waiting for track removal...',
+          printDebugLog(
+            tag: 'MeetingCubit',
+            message: 'Peer $peerId was sharing, waiting for track removal...',
           );
           // Give time for onRemoveTrack to fire (happens during setRemoteDescription)
           // We'll set remote description first, then check if screen share was removed
@@ -323,7 +346,7 @@ class MeetingCubit extends Cubit<MeetingState> {
     );
 
     if (isRenegotiate) {
-      // Wait for onRemoveTrack to fire
+      // wait for onRemoveTrack to fire
       await Future.delayed(const Duration(milliseconds: 300));
 
       final state = this.state;
@@ -334,8 +357,9 @@ class MeetingCubit extends Cubit<MeetingState> {
 
         if (isStillSharing &&
             !webrtcService.currentScreenShares.containsKey(peerId)) {
-          print(
-            '[MeetingCubit] Detected screen share stop for $peerId, updating state',
+          printDebugLog(
+            tag: 'MeetingCubit',
+            message: 'Detected screen share stop for $peerId, updating state',
           );
 
           final updatedParticipants =
@@ -364,12 +388,15 @@ class MeetingCubit extends Cubit<MeetingState> {
       ),
     );
 
-    print('[MeetingCubit] Sent answer to $peerId');
+    printDebugLog(tag: 'MeetingCubit', message: 'Sent answer to $peerId');
   }
 
   Future<void> _handleAnswer(SignalMessage message) async {
     final peerId = message.from; // userId from
-    print('[MeetingCubit] Received answer from: $peerId');
+    printDebugLog(
+      tag: 'MeetingCubit',
+      message: 'Received answer from: $peerId',
+    );
 
     final sdp = message.data!['sdp'] as String;
     final type = message.data!['type'] as String;
@@ -415,7 +442,7 @@ class MeetingCubit extends Cubit<MeetingState> {
 
   Future<void> _handlePeerLeft(SignalMessage message) async {
     final peerId = message.from; // userId from
-    print('[MeetingCubit] Peer left: $peerId');
+    printDebugLog(tag: 'MeetingCubit', message: 'Peer left: $peerId');
 
     await webrtcService.closePeerConnection(peerId);
 
@@ -492,7 +519,10 @@ class MeetingCubit extends Cubit<MeetingState> {
 
     final participantData = message.data;
     if (participantData == null) {
-      print('[MeetingCubit] No participant data in peer-joined message');
+      printDebugLog(
+        tag: 'MeetingCubit',
+        message: 'No participant data in peer-joined message',
+      );
       return;
     }
 
@@ -501,10 +531,16 @@ class MeetingCubit extends Cubit<MeetingState> {
         participantData['displayName'] as String? ?? 'Participant';
     final isHost = participantData['isHost'] as bool? ?? false;
 
-    print('[MeetingCubit] Adding participant: $displayName (ID: $userId)');
+    printDebugLog(
+      tag: 'MeetingCubit',
+      message: 'Adding participant: $displayName (ID: $userId)',
+    );
 
     if (state.participants.any((p) => p.userId == userId)) {
-      print('[MeetingCubit] Participant already in list, skipping');
+      printDebugLog(
+        tag: 'MeetingCubit',
+        message: 'Participant already in list, skipping',
+      );
       return;
     }
 
@@ -518,8 +554,10 @@ class MeetingCubit extends Cubit<MeetingState> {
 
     final updatedParticipants = [...state.participants, participant];
 
-    print(
-      '[MeetingCubit] Participants count: ${state.participants.length} -> ${updatedParticipants.length}',
+    printDebugLog(
+      tag: 'MeetingCubit',
+      message:
+          'Participants count: ${state.participants.length} -> ${updatedParticipants.length}',
     );
 
     emit(state.copyWith(participants: updatedParticipants));
@@ -531,9 +569,14 @@ class MeetingCubit extends Cubit<MeetingState> {
 
     final newMuteState = !state.isMuted;
 
-    print('[MeetingCubit] 🎤 Toggling mute: $newMuteState');
-    print(
-      '[MeetingCubit] Current streams: camera=${webrtcService.remoteStreamMap.length}, screen=${webrtcService.currentScreenShares.length}',
+    printDebugLog(
+      tag: 'MeetingCubit',
+      message: '🎤 Toggling mute: $newMuteState',
+    );
+    printDebugLog(
+      tag: 'MeetingCubit',
+      message:
+          'Current streams: camera=${webrtcService.remoteStreamMap.length}, screen=${webrtcService.currentScreenShares.length}',
     );
 
     await webrtcService.toggleAudio(newMuteState);
@@ -549,8 +592,10 @@ class MeetingCubit extends Cubit<MeetingState> {
         timestamp: DateTime.now(),
       ),
     );
-    print(
-      '[MeetingCubit] ✅ Mute toggled, streams: camera=${webrtcService.remoteStreamMap.length}, screen=${webrtcService.currentScreenShares.length}',
+    printDebugLog(
+      tag: 'MeetingCubit',
+      message:
+          '✅ Mute toggled, streams: camera=${webrtcService.remoteStreamMap.length}, screen=${webrtcService.currentScreenShares.length}',
     );
   }
 
@@ -559,9 +604,14 @@ class MeetingCubit extends Cubit<MeetingState> {
     if (state is! MeetingJoined) return;
 
     final newVideoState = !state.isVideoOff;
-    print('[MeetingCubit] 📹 Toggling video: $newVideoState');
-    print(
-      '[MeetingCubit] Current streams: camera=${webrtcService.remoteStreamMap.length}, screen=${webrtcService.currentScreenShares.length}',
+    printDebugLog(
+      tag: 'MeetingCubit',
+      message: '📹 Toggling video: $newVideoState',
+    );
+    printDebugLog(
+      tag: 'MeetingCubit',
+      message:
+          'Current streams: camera=${webrtcService.remoteStreamMap.length}, screen=${webrtcService.currentScreenShares.length}',
     );
 
     await webrtcService.toggleVideo(newVideoState);
@@ -578,8 +628,10 @@ class MeetingCubit extends Cubit<MeetingState> {
       ),
     );
 
-    print(
-      '[MeetingCubit] ✅ Video toggled, streams: camera=${webrtcService.remoteStreamMap.length}, screen=${webrtcService.currentScreenShares.length}',
+    printDebugLog(
+      tag: 'MeetingCubit',
+      message:
+          '✅ Video toggled, streams: camera=${webrtcService.remoteStreamMap.length}, screen=${webrtcService.currentScreenShares.length}',
     );
   }
 
@@ -614,7 +666,10 @@ class MeetingCubit extends Cubit<MeetingState> {
           ),
         );
 
-        print('[MeetingCubit] Sent renegotiation offer to $peerId');
+        printDebugLog(
+          tag: 'MeetingCubit',
+          message: 'Sent renegotiation offer to $peerId',
+        );
       }
 
       emit(state.copyWith(isScreenSharing: true));
@@ -629,16 +684,19 @@ class MeetingCubit extends Cubit<MeetingState> {
         ),
       );
 
-      print('[MeetingCubit] Screen share started');
+      printDebugLog(tag: 'MeetingCubit', message: 'Screen share started');
     } catch (e) {
-      print('[MeetingCubit] Failed to start screen share: $e');
+      printDebugLog(
+        tag: 'MeetingCubit',
+        message: 'Failed to start screen share: $e',
+      );
     }
   }
 
   void _handleScreenShareError(SignalMessage message) {
     final error = message.data?['error'] as String? ?? 'Screen share failed';
 
-    print('[MeetingCubit] Screen share error: $error');
+    printDebugLog(tag: 'MeetingCubit', message: 'Screen share error: $error');
 
     final state = this.state;
     if (state is MeetingJoined) {
@@ -655,12 +713,18 @@ class MeetingCubit extends Cubit<MeetingState> {
     final peerId = message.from;
     final isSharing = message.data?['isSharing'] as bool? ?? false;
 
-    print('[MeetingCubit] Screen share from $peerId: $isSharing');
+    printDebugLog(
+      tag: 'MeetingCubit',
+      message: 'Screen share from $peerId: $isSharing',
+    );
 
     if (!isSharing) {
       Future.delayed(const Duration(milliseconds: 300), () {
         if (webrtcService.currentScreenShares.containsKey(peerId)) {
-          print('[MeetingCubit] Screen share still present, forcing removal');
+          printDebugLog(
+            tag: 'MeetingCubit',
+            message: 'Screen share still present, forcing removal',
+          );
           webrtcService.removeScreenShareStream(peerId);
         }
       });
@@ -703,7 +767,10 @@ class MeetingCubit extends Cubit<MeetingState> {
         ),
       );
 
-      print('[MeetingCubit] Sent renegotiation offer (stop) to $peerId');
+      printDebugLog(
+        tag: 'MeetingCubit',
+        message: 'Sent renegotiation offer (stop) to $peerId',
+      );
     }
 
     emit(state.copyWith(isScreenSharing: false));
@@ -718,7 +785,7 @@ class MeetingCubit extends Cubit<MeetingState> {
       ),
     );
 
-    print('[MeetingCubit] Screen share stopped');
+    printDebugLog(tag: 'MeetingCubit', message: 'Screen share stopped');
   }
 
   void sendChatMessage(String message) {
@@ -772,7 +839,10 @@ class MeetingCubit extends Cubit<MeetingState> {
     final state = this.state;
     if (state is! MeetingJoined) return;
 
-    print('[MeetingCubit] Handling browser stop share button');
+    printDebugLog(
+      tag: 'MeetingCubit',
+      message: 'Handling browser stop share button',
+    );
 
     emit(state.copyWith(isScreenSharing: false));
 
@@ -786,7 +856,10 @@ class MeetingCubit extends Cubit<MeetingState> {
       ),
     );
 
-    print('[MeetingCubit] Screen share stopped via browser button');
+    printDebugLog(
+      tag: 'MeetingCubit',
+      message: 'Screen share stopped via browser button',
+    );
   }
 
   @override

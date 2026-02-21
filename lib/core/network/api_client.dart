@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../infrastructure/logging_interceptor.dart';
+import '../../utils/log/print_debug_log.dart';
 import 'api_constants.dart';
 import '../error/exceptions.dart';
 
@@ -19,26 +20,29 @@ class ApiClient {
       },
     );
 
-    // Add interceptors
     dio.interceptors.add(LoggingInterceptor());
 
-    dio.interceptors.add(InterceptorsWrapper(
-      onRequest: (options, handler) async {
-        // Add auth token
-        final token = await _getAuthToken();
-        if (token != null) {
-          options.headers['Authorization'] = 'Bearer $token';
-        }
-        return handler.next(options);
-      },
-      onError: (DioError error, handler) {
-        _handleError(error);
-        return handler.next(error);
-      },
-    ));
+    dio.interceptors.add(
+      InterceptorsWrapper(
+        onRequest: (options, handler) async {
+          final token = await _getAuthToken();
+          if (token != null) {
+            options.headers['Authorization'] = 'Bearer $token';
+          }
+          return handler.next(options);
+        },
+        onError: (DioError error, handler) {
+          _handleError(error);
+          return handler.next(error);
+        },
+      ),
+    );
   }
 
-  Future<Response> get(String path, {Map<String, dynamic>? queryParameters}) async {
+  Future<Response> get(
+    String path, {
+    Map<String, dynamic>? queryParameters,
+  }) async {
     try {
       return await dio.get(path, queryParameters: queryParameters);
     } on DioError catch (e) {
@@ -70,7 +74,6 @@ class ApiClient {
     }
   }
 
-
   Future<String?> _getAuthToken() async {
     final token = sharedPreferences.getString("auth_token");
 
@@ -84,9 +87,7 @@ class ApiClient {
       case DioErrorType.receiveTimeout:
         return NetworkException('Connection timeout');
       case DioErrorType.badResponse:
-        return ServerException(
-          error.response?.data['error'] ?? 'Server error',
-        );
+        return ServerException(error.response?.data['error'] ?? 'Server error');
       case DioErrorType.cancel:
         return ServerException('Request cancelled');
       default:
@@ -96,6 +97,6 @@ class ApiClient {
 
   void _handleError(DioError error) {
     // Log error to analytics
-    print('API Error: ${error.message}');
+    printDebugLog(tag: 'API Client', message: 'API Error: ${error.message}');
   }
 }

@@ -4,6 +4,7 @@ import 'package:bincang_visual_flutter/features/meeting/domain/entities/meeting_
 import 'package:web_socket_channel/web_socket_channel.dart';
 import 'package:web_socket_channel/status.dart' as status;
 import '../../../../core/network/api_constants.dart';
+import '../utils/log/print_debug_log.dart';
 
 class WebSocketService {
   WebSocketChannel? _channel;
@@ -14,22 +15,21 @@ class WebSocketService {
   static const int _maxReconnectAttempts = 5;
   static const Duration _heartbeatInterval = Duration(seconds: 10);
 
-
   String? _roomId;
   String? _userId;
   String? _displayName;
 
-
   final _messageController = StreamController<SignalMessage>.broadcast();
-  final _connectionStateController = StreamController<WebSocketConnectionState>.broadcast();
-
+  final _connectionStateController =
+      StreamController<WebSocketConnectionState>.broadcast();
 
   Stream<SignalMessage> get messages => _messageController.stream;
-  Stream<WebSocketConnectionState> get connectionState => _connectionStateController.stream;
+
+  Stream<WebSocketConnectionState> get connectionState =>
+      _connectionStateController.stream;
 
   bool _isDisposed = false;
   bool _isConnecting = false;
-
 
   Future<void> connect({
     required String roomId,
@@ -39,10 +39,9 @@ class WebSocketService {
     _isIntentionalDisconnect = false;
     if (_isDisposed) throw Exception('Service is disposed');
     if (_isConnecting) {
-      print('[WebSocket] Already connecting');
+      printDebugLog(tag: 'WebSocket', message: 'Already connecting');
       return;
     }
-
 
     _roomId = roomId;
     _userId = userId;
@@ -51,28 +50,27 @@ class WebSocketService {
 
     try {
       final wsUrl = ApiConstants.wsUrl;
-      final uri = Uri.parse('$wsUrl${ApiConstants.wsRoom(roomId)}?userId=$userId&displayName=${Uri.encodeComponent(displayName)}');
+      final uri = Uri.parse(
+        '$wsUrl${ApiConstants.wsRoom(roomId)}?userId=$userId&displayName=${Uri.encodeComponent(displayName)}',
+      );
 
-      print('[WebSocket] Connecting to: $uri');
+      printDebugLog(tag: 'WebSocket ', message: 'Connecting to: $uri');
       _connectionStateController.add(WebSocketConnectionState.connecting);
 
       // if (_channel != null) {
-      //   print('[WebSocket] Already connected');
+      //   printDebugLog('[WebSocket] Already connected');
       //   return;
       // }
       _channel = WebSocketChannel.connect(uri);
 
-
       await _channel!.ready;
 
-      print('[WebSocket] Connected successfully');
+      printDebugLog(tag: 'WebSocket', message: 'Connected successfully');
       _isConnecting = false;
       _reconnectAttempts = 0;
       _connectionStateController.add(WebSocketConnectionState.connected);
 
-
       _startHeartbeat();
-
 
       _channel!.stream.listen(
         _handleMessage,
@@ -81,55 +79,56 @@ class WebSocketService {
         cancelOnError: false,
       );
     } catch (e) {
-      print('[WebSocket] Connection error: $e');
+      printDebugLog(tag: 'WebSocket', message: 'Connection error: $e');
       _isConnecting = false;
       _connectionStateController.add(WebSocketConnectionState.error);
       _handleReconnection();
     }
   }
 
-
   void _handleMessage(dynamic message) {
     try {
       final data = jsonDecode(message as String) as Map<String, dynamic>;
 
-
       if (data['type'] == 'pong') {
-        print('[WebSocket] Heartbeat received');
+        printDebugLog(tag: 'WebSocket', message: 'Heartbeat received');
         return;
       }
 
       final signalMessage = _parseSignalMessage(data);
       _messageController.add(signalMessage);
     } catch (e) {
-      print('[WebSocket] Failed to parse message: $e');
+      printDebugLog(tag: 'WebSocket', message: 'Failed to parse message: $e');
     }
   }
 
-
   void _handleError(error) {
-    print('[WebSocket] Error: $error');
+    printDebugLog(tag: 'WebSocket', message: 'Error: $error');
     _connectionStateController.add(WebSocketConnectionState.error);
     _stopHeartbeat();
   }
 
-
   void _handleDisconnection() {
-    print('[WebSocket] Connection closed');
+    printDebugLog(tag: 'WebSocket', message: 'Connection closed');
     _connectionStateController.add(WebSocketConnectionState.disconnected);
     _stopHeartbeat();
     if (!_isIntentionalDisconnect) {
       _handleReconnection();
     } else {
-      print('[WebSocket] Intentional disconnect - not reconnecting');
+      printDebugLog(
+        tag: 'WebSocket',
+        message: 'Intentional disconnect - not reconnecting',
+      );
     }
   }
-
 
   void _handleReconnection() {
     if (_isDisposed || _roomId == null) return;
     if (_reconnectAttempts >= _maxReconnectAttempts) {
-      print('[WebSocket] Max reconnection attempts reached');
+      printDebugLog(
+        tag: 'WebSocket',
+        message: 'Max reconnection attempts reached',
+      );
       _connectionStateController.add(WebSocketConnectionState.failed);
       return;
     }
@@ -137,7 +136,11 @@ class WebSocketService {
     _reconnectAttempts++;
     final delay = Duration(seconds: 2 * _reconnectAttempts);
 
-    print('[WebSocket] Reconnecting in ${delay.inSeconds}s (attempt $_reconnectAttempts)');
+    printDebugLog(
+      tag: 'WebSocket',
+      message:
+          'Reconnecting in ${delay.inSeconds}s (attempt $_reconnectAttempts)',
+    );
     _connectionStateController.add(WebSocketConnectionState.reconnecting);
 
     _reconnectTimer?.cancel();
@@ -152,31 +155,30 @@ class WebSocketService {
     });
   }
 
-
   void _startHeartbeat() {
     _stopHeartbeat();
     _heartbeatTimer = Timer.periodic(_heartbeatInterval, (timer) {
       if (_channel != null && !_isDisposed) {
-        send(SignalMessage(
-          type: SignalType.ping,
-          from: _userId ?? '',
-          roomId: _roomId ?? '',
-          timestamp: DateTime.now(),
-        ));
+        send(
+          SignalMessage(
+            type: SignalType.ping,
+            from: _userId ?? '',
+            roomId: _roomId ?? '',
+            timestamp: DateTime.now(),
+          ),
+        );
       }
     });
   }
-
 
   void _stopHeartbeat() {
     _heartbeatTimer?.cancel();
     _heartbeatTimer = null;
   }
 
-
   void send(SignalMessage message) {
     if (_channel == null || _isDisposed) {
-      print('[WebSocket] Cannot send message: not connected');
+      printDebugLog(tag: 'WebSocket', message: 'Cannot send message: not connected');
       return;
     }
 
@@ -184,10 +186,9 @@ class WebSocketService {
       final data = _serializeSignalMessage(message);
       _channel!.sink.add(jsonEncode(data));
     } catch (e) {
-      print('[WebSocket] Failed to send message: $e');
+      printDebugLog(tag: 'WebSocket', message: 'Failed to send message: $e');
     }
   }
-
 
   SignalMessage _parseSignalMessage(Map<String, dynamic> data) {
     return SignalMessage(
@@ -200,7 +201,6 @@ class WebSocketService {
     );
   }
 
-
   Map<String, dynamic> _serializeSignalMessage(SignalMessage message) {
     return {
       'type': _signalTypeToString(message.type),
@@ -211,7 +211,6 @@ class WebSocketService {
       'timestamp': message.timestamp.toUtc().toIso8601String(),
     };
   }
-
 
   SignalType _parseSignalType(String type) {
     switch (type) {
@@ -241,7 +240,6 @@ class WebSocketService {
         return SignalType.join;
     }
   }
-
 
   String _signalTypeToString(SignalType type) {
     switch (type) {
@@ -274,7 +272,6 @@ class WebSocketService {
     }
   }
 
-
   void disconnect() {
     _isIntentionalDisconnect = true;
     _stopHeartbeat();
@@ -289,7 +286,6 @@ class WebSocketService {
     _connectionStateController.add(WebSocketConnectionState.disconnected);
   }
 
-
   Future<void> dispose() async {
     if (_isDisposed) return;
     _isDisposed = true;
@@ -300,12 +296,12 @@ class WebSocketService {
     await _connectionStateController.close();
   }
 
-
   bool get isConnected => _channel != null && !_isDisposed;
+
   String? get currentRoomId => _roomId;
+
   String? get currentUserId => _userId;
 }
-
 
 enum WebSocketConnectionState {
   connecting,

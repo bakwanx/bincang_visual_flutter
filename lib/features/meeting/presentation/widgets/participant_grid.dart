@@ -62,9 +62,6 @@ class ParticipantGrid extends StatelessWidget {
               final peerId = remoteStreams.keys.elementAt(remoteIndex);
               final stream = remoteStreams[peerId];
 
-              print(
-                '[ParticipantGrid] Looking up participant for peerId: $peerId',
-              );
               final participant = _findParticipant(peerId, participants);
 
               return VideoRendererWidget(

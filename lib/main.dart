@@ -1,4 +1,5 @@
 import 'package:bincang_visual_flutter/di/dependency_injection.dart';
+import 'package:bincang_visual_flutter/utils/log/print_debug_log.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'app.dart';
@@ -15,8 +16,8 @@ void main() async {
   // await Hive.init(path);
   FlutterError.onError = (FlutterErrorDetails details) {
     FlutterError.presentError(details);
-    debugPrint('Flutter Error: ${details.exception}');
-    debugPrint('Stack trace: ${details.stack}');
+    printDebugLog(tag: 'Flutter Error', message: '${details.exception}');
+    printDebugLog(tag: 'Stack trace', message: '${details.stack}');
   };
 
   runApp(const BincangVisualApp());
