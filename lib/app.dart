@@ -1,3 +1,4 @@
+import 'package:bincang_visual_flutter/core/router/app_router.dart';
 import 'package:bincang_visual_flutter/features/analytics/presentation/cubit/analytics_cubit.dart';
 import 'package:bincang_visual_flutter/features/auth/presentation/cubit/auth_cubit.dart';
 import 'package:bincang_visual_flutter/features/calendar/presentation/cubit/calendar_cubit.dart';
@@ -29,12 +30,13 @@ class BincangVisualApp extends StatelessWidget {
         BlocProvider(create: (_) => di<AnalyticsCubit>()),
         BlocProvider(create: (_) => di<CalendarCubit>()),
       ],
-      child: MaterialApp(
+      child: MaterialApp.router(
         title: 'Bincang Visual',
         debugShowCheckedModeBanner: false,
         theme: AppTheme.lightTheme,
         darkTheme: AppTheme.darkTheme,
         themeMode: ThemeMode.system,
+        routerConfig: AppRouter.router,
         builder: (context, child) => ResponsiveBreakpoints.builder(
           child: child!,
           breakpoints: [
@@ -44,7 +46,6 @@ class BincangVisualApp extends StatelessWidget {
             const Breakpoint(start: 1921, end: double.infinity, name: '4K'),
           ],
         ),
-        initialRoute: '/',
         // routes: {
         //   '/': (context) => const AuthWrapper(),
         //   '/login': (context) => const LoginPage(),
@@ -54,39 +55,39 @@ class BincangVisualApp extends StatelessWidget {
         //   '/analytics': (context) => const AnalyticsPage(),
         //   '/settings': (context) => const SettingsPage(),
         // },
-        onGenerateRoute: (settings) {
-          switch (settings.name) {
-            case '/':
-              return MaterialPageRoute(
-                builder: (_) => const HomePage(),
-              );
-
-            case '/preview':
-              final args = settings.arguments as Map<String, dynamic>;
-              return MaterialPageRoute(
-                builder: (_) => MeetingPreviewPage(
-                  roomId: args['roomId'] as String,
-                  isNewMeeting: args['isNewMeeting'] as bool,
-                ),
-              );
-
-            case '/meeting':
-              final args = settings.arguments as Map<String, dynamic>;
-              return MaterialPageRoute(
-                builder: (_) => MeetingRoomPage(
-                  roomId: args['roomId'] as String,
-                  displayName: args['displayName'] as String,
-                  initialCameraState: args['initialCameraState'] as bool? ?? true,
-                  initialMicState: args['initialMicState'] as bool? ?? true,
-                ),
-              );
-
-            default:
-              return MaterialPageRoute(
-                builder: (_) => const HomePage(),
-              );
-          }
-        },
+        // onGenerateRoute: (settings) {
+        //   switch (settings.name) {
+        //     case '/':
+        //       return MaterialPageRoute(
+        //         builder: (_) => const HomePage(),
+        //       );
+        //
+        //     case '/preview':
+        //       final args = settings.arguments as Map<String, dynamic>;
+        //       return MaterialPageRoute(
+        //         builder: (_) => MeetingPreviewPage(
+        //           roomId: args['roomId'] as String,
+        //           isNewMeeting: args['isNewMeeting'] as bool,
+        //         ),
+        //       );
+        //
+        //     case '/meeting':
+        //       final args = settings.arguments as Map<String, dynamic>;
+        //       return MaterialPageRoute(
+        //         builder: (_) => MeetingRoomPage(
+        //           roomId: args['roomId'] as String,
+        //           displayName: args['displayName'] as String,
+        //           initialCameraState: args['initialCameraState'] as bool? ?? true,
+        //           initialMicState: args['initialMicState'] as bool? ?? true,
+        //         ),
+        //       );
+        //
+        //     default:
+        //       return MaterialPageRoute(
+        //         builder: (_) => const HomePage(),
+        //       );
+        //   }
+        // },
       )
     );
   }

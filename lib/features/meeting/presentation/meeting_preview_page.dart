@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_webrtc/flutter_webrtc.dart';
+import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class MeetingPreviewPage extends StatefulWidget {
@@ -102,169 +103,171 @@ class _MeetingPreviewPageState extends State<MeetingPreviewPage> {
         ),
       ),
       body: SingleChildScrollView(
-        child: Container(
-          constraints: const BoxConstraints(maxWidth: 800),
-          margin: const EdgeInsets.symmetric(horizontal: 16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              const SizedBox(height: 24),
+        child: Center(
+          child: Container(
+            constraints: const BoxConstraints(maxWidth: 800),
+            margin: const EdgeInsets.symmetric(horizontal: 16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                const SizedBox(height: 24),
 
-              AspectRatio(
-                aspectRatio: 16 / 9,
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: Colors.black,
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(12),
-                    child: _buildPreview(),
+                AspectRatio(
+                  aspectRatio: 16 / 9,
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: Colors.black,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(12),
+                      child: _buildPreview(),
+                    ),
                   ),
                 ),
-              ),
 
-              const SizedBox(height: 24),
+                const SizedBox(height: 24),
 
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  IconButton(
-                    onPressed: _toggleCamera,
-                    icon: Icon(
-                      _isCameraOn ? Icons.videocam : Icons.videocam_off,
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    IconButton(
+                      onPressed: _toggleCamera,
+                      icon: Icon(
+                        _isCameraOn ? Icons.videocam : Icons.videocam_off,
+                      ),
+                      iconSize: 32,
+                      style: IconButton.styleFrom(
+                        backgroundColor: _isCameraOn ? Colors.blue : Colors.red,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.all(16),
+                      ),
                     ),
-                    iconSize: 32,
-                    style: IconButton.styleFrom(
-                      backgroundColor: _isCameraOn ? Colors.blue : Colors.red,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.all(16),
+                    const SizedBox(width: 16),
+
+                    IconButton(
+                      onPressed: _toggleMicrophone,
+                      icon: Icon(_isMicOn ? Icons.mic : Icons.mic_off),
+                      iconSize: 32,
+                      style: IconButton.styleFrom(
+                        backgroundColor: _isMicOn ? Colors.blue : Colors.red,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.all(16),
+                      ),
                     ),
-                  ),
-                  const SizedBox(width: 16),
-
-                  IconButton(
-                    onPressed: _toggleMicrophone,
-                    icon: Icon(_isMicOn ? Icons.mic : Icons.mic_off),
-                    iconSize: 32,
-                    style: IconButton.styleFrom(
-                      backgroundColor: _isMicOn ? Colors.blue : Colors.red,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.all(16),
-                    ),
-                  ),
-                ],
-              ),
-
-              const SizedBox(height: 24),
-
-              Form(
-                key: _formKey,
-                child: TextFormField(
-                  controller: _nameController,
-                  decoration: const InputDecoration(
-                    labelText: 'Your Name',
-                    hintText: 'Enter your display name',
-                    prefixIcon: Icon(Icons.person),
-                    border: OutlineInputBorder(),
-                  ),
-                  validator: (value) {
-                    if (value == null || value.trim().isEmpty) {
-                      return 'Please enter your name';
-                    }
-                    return null;
-                  },
+                  ],
                 ),
-              ),
 
-              const SizedBox(height: 24),
+                const SizedBox(height: 24),
 
-              if (widget.isNewMeeting) ...[
-                Card(
-                  child: Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text(
-                          'Your Meeting Link',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
+                Form(
+                  key: _formKey,
+                  child: TextFormField(
+                    controller: _nameController,
+                    decoration: const InputDecoration(
+                      labelText: 'Your Name',
+                      hintText: 'Enter your display name',
+                      prefixIcon: Icon(Icons.person),
+                      border: OutlineInputBorder(),
+                    ),
+                    validator: (value) {
+                      if (value == null || value.trim().isEmpty) {
+                        return 'Please enter your name';
+                      }
+                      return null;
+                    },
+                  ),
+                ),
+
+                const SizedBox(height: 24),
+
+                if (widget.isNewMeeting) ...[
+                  Card(
+                    child: Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            'Your Meeting Link',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
-                        ),
-                        const SizedBox(height: 8),
-                        Row(
-                          children: [
-                            Expanded(
-                              child: Text(
-                                _getMeetingLink(),
-                                style: TextStyle(color: Colors.blue.shade700),
+                          const SizedBox(height: 8),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  _getMeetingLink(),
+                                  style: TextStyle(color: Colors.blue.shade700),
+                                ),
                               ),
+                              IconButton(
+                                icon: const Icon(Icons.copy),
+                                onPressed: _copyMeetingLink,
+                                tooltip: 'Copy link',
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            'Share this link with participants',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Colors.grey.shade600,
                             ),
-                            IconButton(
-                              icon: const Icon(Icons.copy),
-                              onPressed: _copyMeetingLink,
-                              tooltip: 'Copy link',
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          'Share this link with participants',
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: Colors.grey.shade600,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                ],
+
+                if (_errorMessage != null) ...[
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: Colors.red.shade50,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(Icons.error, color: Colors.red.shade700),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            _errorMessage!,
+                            style: TextStyle(color: Colors.red.shade700),
                           ),
                         ),
                       ],
                     ),
                   ),
-                ),
-                const SizedBox(height: 16),
-              ],
+                  const SizedBox(height: 16),
+                ],
 
-              if (_errorMessage != null) ...[
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: Colors.red.shade50,
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Row(
-                    children: [
-                      Icon(Icons.error, color: Colors.red.shade700),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: Text(
-                          _errorMessage!,
-                          style: TextStyle(color: Colors.red.shade700),
-                        ),
-                      ),
-                    ],
+                ElevatedButton.icon(
+                  onPressed: _isLoading ? null : _joinMeeting,
+                  icon:
+                      _isLoading
+                          ? const SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                          : const Icon(Icons.video_call),
+                  label: Text(widget.isNewMeeting ? 'Start Meeting' : 'Join Now'),
+                  style: ElevatedButton.styleFrom(
+                    padding: const EdgeInsets.all(16),
                   ),
                 ),
-                const SizedBox(height: 16),
+
+                const SizedBox(height: 24),
               ],
-
-              ElevatedButton.icon(
-                onPressed: _isLoading ? null : _joinMeeting,
-                icon:
-                    _isLoading
-                        ? const SizedBox(
-                          width: 20,
-                          height: 20,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        )
-                        : const Icon(Icons.video_call),
-                label: Text(widget.isNewMeeting ? 'Start Meeting' : 'Join Now'),
-                style: ElevatedButton.styleFrom(
-                  padding: const EdgeInsets.all(16),
-                ),
-              ),
-
-              const SizedBox(height: 24),
-            ],
+            ),
           ),
         ),
       ),
@@ -343,7 +346,7 @@ class _MeetingPreviewPageState extends State<MeetingPreviewPage> {
   }
 
   String _getMeetingLink() {
-    return 'https://bincang-visual.com/room/${widget.roomId}';
+    return 'https://bincang-visual.cloud/room/${widget.roomId}';
   }
 
   void _copyMeetingLink() {
@@ -373,17 +376,11 @@ class _MeetingPreviewPageState extends State<MeetingPreviewPage> {
 
     if (!mounted) return;
 
-    Navigator.pushReplacementNamed(
-      context,
-      '/meeting',
-      arguments: {
-        'roomId': widget.roomId,
-        'userId': 'user-${DateTime.now().millisecondsSinceEpoch}',
-        'displayName': displayName,
-        'isNewMeeting': widget.isNewMeeting,
-        'initialCameraState': _isCameraOn,
-        'initialMicState': _isMicOn,
-      },
-    );
+    context.go('/meeting', extra: {
+      'roomId': widget.roomId,
+      'displayName': displayName,
+      'initialCameraState': _isCameraOn,
+      'initialMicState': _isMicOn,
+    });
   }
 }

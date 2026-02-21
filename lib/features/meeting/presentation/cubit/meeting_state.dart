@@ -129,3 +129,12 @@ class MeetingRoomCreated extends MeetingState {
   @override
   List<Object?> get props => [roomId, joinUrl];
 }
+
+class RoomValidated extends MeetingState {
+  final Room room;
+
+  const RoomValidated({required this.room});
+
+  @override
+  List<Object?> get props => [room];
+}

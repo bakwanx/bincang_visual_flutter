@@ -5,12 +5,15 @@ import 'package:bincang_visual_flutter/features/meeting/presentation/widgets/par
 import 'package:bincang_visual_flutter/features/meeting/presentation/widgets/participants_panel.dart';
 import 'package:bincang_visual_flutter/features/meeting/presentation/widgets/screen_share_view.dart';
 import 'package:bincang_visual_flutter/features/meeting/presentation/widgets/video_renderer_widget.dart';
+import 'package:bincang_visual_flutter/utils/extension/null_helper_extenison.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_webrtc/flutter_webrtc.dart';
+import 'package:go_router/go_router.dart';
 import 'package:responsive_framework/responsive_framework.dart';
 
+import '../../../utils/extension/context_extension.dart';
 import '../domain/entities/meeting_entities.dart';
 
 class MeetingRoomPage extends StatefulWidget {
@@ -79,7 +82,7 @@ class _MeetingRoomPageState extends State<MeetingRoomPage> {
                 ),
               );
             } else if (state is MeetingEnded) {
-              Navigator.of(context).pop();
+              context.go('/');
             }
           },
           builder: (context, state) {
@@ -141,7 +144,7 @@ class _MeetingRoomPageState extends State<MeetingRoomPage> {
           ),
         ),
 
-        Positioned(top: 0, left: 0, right: 0, child: _buildTopBar(state)),
+        Positioned(top: 0, right: 0, child: _buildTopBar(state)),
 
         Positioned(
           bottom: 20,
@@ -159,11 +162,13 @@ class _MeetingRoomPageState extends State<MeetingRoomPage> {
                 if (state.isScreenSharing) {
                   context.read<MeetingCubit>().stopScreenShare();
                 } else {
-                  if (kIsWeb) {
-                    context.read<MeetingCubit>().startScreenShare();
-                  } else {
-                    _showScreenShareNotSupported();
-                  }
+                  context.read<MeetingCubit>().startScreenShare();
+                  // return;
+                  // if (kIsWeb) {
+                  //   context.read<MeetingCubit>().startScreenShare();
+                  // } else {
+                  //   _showScreenShareNotSupported();
+                  // }
                 }
               },
               onToggleChat: () => setState(() => _showChat = !_showChat),
@@ -186,10 +191,10 @@ class _MeetingRoomPageState extends State<MeetingRoomPage> {
         if (_showChat)
           Positioned(
             right: isMobile ? 0 : 20,
-            bottom: isMobile ? 100 : 20,
+            bottom: isMobile ? 0 : 20,
             top: isMobile ? null : 20,
-            width: isMobile ? MediaQuery.of(context).size.width : 320,
-            height: isMobile ? 300 : null,
+            width: isMobile ? context.width() : 320,
+            height: isMobile ? context.height() : null,
             child: ChatPanel(
               messages: state.chatMessages,
               onSendMessage: (message) {
@@ -203,10 +208,10 @@ class _MeetingRoomPageState extends State<MeetingRoomPage> {
         if (_showParticipants)
           Positioned(
             right: isMobile ? 0 : (_showChat ? 360 : 20),
-            bottom: isMobile ? 100 : 20,
+            bottom: isMobile ? 0 : 20,
             top: isMobile ? null : 20,
             width: isMobile ? MediaQuery.of(context).size.width : 280,
-            height: isMobile ? 300 : null,
+            height: isMobile ? context.height() : null,
             child: ParticipantsPanel(
               participants: state.participants,
               onClose: () => setState(() => _showParticipants = false),
@@ -260,24 +265,62 @@ class _MeetingRoomPageState extends State<MeetingRoomPage> {
         itemBuilder: (context, index) {
           final participant = allParticipants[index];
           final isLocal = participant.userId == state.localUserId;
-          final stream =
-          isLocal
+          final stream = isLocal
               ? state.localStream
               : state.remoteStreams[participant.userId];
 
           return Container(
             width: 120,
             margin: const EdgeInsets.only(right: 8),
-            child: VideoRendererWidget(
+            child: _buildCompactVideoCard(
               stream: stream,
-              isMirrored: isLocal,
+              participant: participant,
               isLocal: isLocal,
-              participantName: participant.displayName,
-              isMuted: participant.isMuted,
-              isVideoOff: participant.isVideoOff,
             ),
           );
         },
+      ),
+    );
+  }
+
+  Widget _buildCompactVideoCard({
+    required MediaStream? stream,
+    required Participant participant,
+    required bool isLocal,
+  }) {
+    if (stream != null && !participant.isVideoOff) {
+      return VideoRendererWidget(
+        key: ValueKey('strip_${participant.userId}_${stream.id}'),
+        stream: stream,
+        isMirrored: isLocal,
+        isLocal: isLocal,
+        participantName: participant.displayName,
+        isMuted: participant.isMuted,
+        isVideoOff: false,
+      );
+    } else {
+      return _buildCompactPlaceholder(participant);
+    }
+  }
+
+  Widget _buildCompactPlaceholder(Participant participant) {
+    return Container(
+      color: Colors.grey.shade900,
+      child: Center(
+        child: CircleAvatar(
+          radius: 20,
+          backgroundColor: Colors.blue,
+          child: Text(
+            participant.displayName.isNotEmpty
+                ? participant.displayName[0].toUpperCase()
+                : 'U',
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ),
       ),
     );
   }
@@ -307,8 +350,8 @@ class _MeetingRoomPageState extends State<MeetingRoomPage> {
                 ),
               ),
             ],
-            const Spacer(),
-            if (state.isRecording)
+            if (state.roomInfo!.isRecording)... {
+              const Spacer(),
               Container(
                 padding: const EdgeInsets.symmetric(
                   horizontal: 12,
@@ -337,6 +380,7 @@ class _MeetingRoomPageState extends State<MeetingRoomPage> {
                   ],
                 ),
               ),
+            }
           ],
         ),
       ),
@@ -354,11 +398,11 @@ class _MeetingRoomPageState extends State<MeetingRoomPage> {
                 ),
                 actions: [
                   TextButton(
-                    onPressed: () => Navigator.of(context).pop(false),
+                    onPressed: () => context.pop(false),
                     child: const Text('Cancel'),
                   ),
                   ElevatedButton(
-                    onPressed: () => Navigator.of(context).pop(true),
+                    onPressed: () => context.pop(true),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.red,
                     ),

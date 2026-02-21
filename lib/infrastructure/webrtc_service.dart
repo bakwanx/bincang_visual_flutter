@@ -1,9 +1,11 @@
 import 'dart:async';
+import 'dart:io';
 import 'dart:ui';
 import 'package:bincang_visual_flutter/features/meeting/domain/entities/meeting_entities.dart';
 import 'package:flutter_webrtc/flutter_webrtc.dart';
 import '../../../../core/error/exceptions.dart';
 import '../utils/log/print_debug_log.dart';
+import '../utils/media/media_projection_service.dart';
 
 class WebRTCService {
   final Map<String, RTCPeerConnection> _peerConnections = {};
@@ -13,8 +15,6 @@ class WebRTCService {
   MediaStream? _screenStream;
 
   final Map<String, RTCRtpSender> _screenShareSenders = {};
-
-  final Map<String, Set<String>> _processedStreamIds = {};
 
   final _remoteStreamController =
       StreamController<Map<String, MediaStream>>.broadcast();
@@ -41,7 +41,7 @@ class WebRTCService {
   Map<String, MediaStream> get currentScreenShares =>
       Map.unmodifiable(_screenShareStreams);
 
-  RoomConfig? _config;
+
   bool _isDisposed = false;
   String? _localUserId;
   VoidCallback? onBrowserStopShare;
@@ -100,7 +100,6 @@ class WebRTCService {
       return _peerConnections[peerId]!;
     }
 
-    _config = config;
 
     try {
       final Map<String, dynamic> configuration = {
@@ -160,10 +159,6 @@ class WebRTCService {
         for (var stream in event.streams) {
           final streamId = stream.id;
 
-          if (!_processedStreamIds.containsKey(peerId)) {
-            _processedStreamIds[peerId] = {};
-          }
-
           final existingCamera = _remoteStreams[peerId];
           final existingScreen = _screenShareStreams[peerId];
 
@@ -189,15 +184,6 @@ class WebRTCService {
             continue;
           }
 
-          if (_processedStreamIds[peerId]!.contains(streamId)) {
-            printDebugLog(
-              tag: '$peerId',
-              message: 'Stream $streamId already processed, skipping',
-            );
-            continue;
-          }
-
-          _processedStreamIds[peerId]!.add(streamId);
 
           printDebugLog(tag: '$peerId', message: 'New stream: $streamId');
 
@@ -363,10 +349,21 @@ class WebRTCService {
     }
 
     try {
-      _screenStream = await navigator.mediaDevices.getDisplayMedia({
-        'video': {'cursor': 'always'},
-        'audio': false,
-      });
+      if(Platform.isAndroid) {
+        await MediaProjectionService.start();
+        _screenStream = await navigator.mediaDevices.getDisplayMedia({ 'video': { 'width': {'ideal': 1280}, // Lower than desktop
+          'height': {'ideal': 720},
+          'frameRate': {'ideal': 15}, // Lower frame rate
+          }, 'audio': false, });
+      } else {
+        _screenStream = await navigator.mediaDevices.getDisplayMedia({
+          'video': {'cursor': 'always'},
+          'audio': false,
+        });
+      }
+
+
+
 
       printDebugLog(
         tag: 'WebRTC',
@@ -406,19 +403,8 @@ class WebRTCService {
       }
 
       screenTrack.onEnded = () async {
-        printDebugLog(tag: 'WebRTC', message: 'Screen share ended by user');
         await stopScreenShare();
-        try {
-          await stopScreenShare();
-
-          if (_localUserId != null) {
-            if (onBrowserStopShare != null) {
-              onBrowserStopShare!();
-            }
-          }
-        } catch (e) {
-          printDebugLog(tag: 'WebRTC', message: 'Error stopping screen share: $e');
-        }
+        onBrowserStopShare?.call();
       };
 
       return offersToSend;
@@ -431,7 +417,6 @@ class WebRTCService {
   Future<Map<String, RTCSessionDescription>> stopScreenShare() async {
     if (_screenStream == null) return {};
 
-    printDebugLog(tag: 'WebRTC', message: 'Stopping screen share');
 
     _screenStream!.getTracks().forEach((track) {
       track.stop();
@@ -522,8 +507,6 @@ class WebRTCService {
     _screenShareSenders.remove(peerId);
     _screenShareStreams.remove(peerId);
     _screenShareStreamController.add(Map.from(_screenShareStreams));
-
-    _processedStreamIds.remove(peerId);
   }
 
   Future<void> closeAllConnections() async {
@@ -566,7 +549,6 @@ class WebRTCService {
 
     _remoteStreams.clear();
     _screenShareSenders.clear();
-    _processedStreamIds.clear();
 
     await _remoteStreamController.close();
     await _iceConnectionStateController.close();

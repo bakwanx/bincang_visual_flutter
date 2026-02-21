@@ -61,7 +61,7 @@ class ParticipantsPanel extends StatelessWidget {
           Expanded(
             child: ListView.builder(
               padding: const EdgeInsets.all(8),
-              itemCount: participants.length + 1, // +1 for "You"
+              itemCount: participants.length + 1,
               itemBuilder: (context, index) {
                 if (index == 0) {
                   return _ParticipantTile(

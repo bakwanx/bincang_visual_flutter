@@ -1,6 +1,8 @@
+import 'package:bincang_visual_flutter/utils/extension/widget_extension.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../utils/const/assets_path.dart';
 import '../../../utils/extension/datetime_extension.dart';
@@ -31,15 +33,11 @@ class _HomePageState extends State<HomePage> {
     return BlocListener<MeetingCubit, MeetingState>(
       listener: (context, state) {
         if (state is MeetingRoomCreated) {
-          Navigator.pushNamed(
-            context,
-            '/preview',
-            arguments: {
-              'roomId': state.roomId,
-              'joinUrl': state.joinUrl,
-              'isNewMeeting': true,
-            },
-          );
+          context.go('/preview', extra: {
+            'roomId': state.roomId,
+            'isNewMeeting': true,
+          });
+
         } else if (state is MeetingError) {
           setState(() => _isCreating = false);
           ScaffoldMessenger.of(context).showSnackBar(
@@ -53,7 +51,29 @@ class _HomePageState extends State<HomePage> {
           centerTitle: false,
           title: Padding(
             padding: const EdgeInsets.only(left: 16),
-            child: Image.asset(AssetsPath.icLogo, width: 200),
+            child: Row(
+              children: [
+                Image.asset(AssetsPath.icLogo, height: 24).rightMargin(8),
+                Expanded(
+                  child: Row(
+                    children: [
+                      Text(
+                        "Bincang ",
+                        style: AppTextStyle.labelMedium.copyWith(
+                          color: Theme.of(context).colorScheme.onSurface,
+                        ),
+                      ),
+                      Text(
+                        "Visual",
+                        style: AppTextStyle.labelMedium.copyWith(
+                          color: Color(0xff4b89ec),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
           ),
           actions: [
             StreamBuilder(
@@ -105,7 +125,10 @@ class _HomePageState extends State<HomePage> {
                         children: [
                           const Text(
                             'Join a Meeting',
-                            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                            style: TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
                           const SizedBox(height: 16),
                           Form(
@@ -170,15 +193,19 @@ class _HomePageState extends State<HomePage> {
                   OutlinedButton.icon(
                     onPressed: _isCreating ? null : _createNewMeeting,
                     icon:
-                    _isCreating
-                        ? const SizedBox(
-                      width: 20,
-                      height: 20,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    )
-                        : const Icon(Icons.add),
-                    label: Text(_isCreating ? 'Creating...' : 'Create New Meeting'),
-                    style: OutlinedButton.styleFrom(padding: const EdgeInsets.all(16)),
+                        _isCreating
+                            ? const SizedBox(
+                              width: 20,
+                              height: 20,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            )
+                            : const Icon(Icons.add),
+                    label: Text(
+                      _isCreating ? 'Creating...' : 'Create New Meeting',
+                    ),
+                    style: OutlinedButton.styleFrom(
+                      padding: const EdgeInsets.all(16),
+                    ),
                   ),
                 ],
               ),
@@ -188,8 +215,6 @@ class _HomePageState extends State<HomePage> {
       ),
     );
   }
-
-
 
   Future<void> _pasteFromClipboard() async {
     final data = await Clipboard.getData(Clipboard.kTextPlain);
@@ -203,11 +228,10 @@ class _HomePageState extends State<HomePage> {
       final input = _meetingCodeController.text.trim();
       final roomId = _extractRoomId(input);
 
-      Navigator.pushNamed(
-        context,
-        '/preview',
-        arguments: {'roomId': roomId, 'isNewMeeting': false},
-      );
+      context.go('/preview', extra: {
+        'roomId': roomId,
+        'isNewMeeting': true,
+      });
     }
   }
 

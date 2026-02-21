@@ -84,7 +84,6 @@ class _ChatPanelState extends State<ChatPanel> {
       color: Colors.white,
       child: Column(
         children: [
-
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(

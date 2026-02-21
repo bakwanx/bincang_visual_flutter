@@ -109,7 +109,6 @@ class _CalendarPageState extends State<CalendarPage> {
   }
 
   Widget _buildMeetingsList(List<ScheduledMeeting> meetings) {
-    // Group meetings by date
     final groupedMeetings = <String, List<ScheduledMeeting>>{};
     for (var meeting in meetings) {
       final dateKey = DateFormat('yyyy-MM-dd').format(meeting.startTime);
@@ -206,13 +205,12 @@ class _CalendarPageState extends State<CalendarPage> {
   }
 
   void _joinMeeting(ScheduledMeeting meeting) {
-    // Navigate to meeting room
     Navigator.pushNamed(
       context,
       '/meeting',
       arguments: {
         'roomId': meeting.roomId,
-        'displayName': 'User', // Get from auth
+        'displayName': 'User',
       },
     );
   }

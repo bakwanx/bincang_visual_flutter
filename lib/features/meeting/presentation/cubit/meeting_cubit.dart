@@ -1,24 +1,27 @@
 import 'dart:async';
-import 'package:bincang_visual_flutter/core/error/exceptions.dart';
+
 import 'package:bincang_visual_flutter/core/usecase/usecase.dart';
+import 'package:bincang_visual_flutter/features/meeting/domain/entities/meeting_entities.dart';
 import 'package:bincang_visual_flutter/infrastructure/webrtc_service.dart';
 import 'package:bincang_visual_flutter/infrastructure/websocket_service.dart';
-import 'package:bincang_visual_flutter/features/meeting/domain/entities/meeting_entities.dart';
 import 'package:bincang_visual_flutter/utils/log/print_debug_log.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:equatable/equatable.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_webrtc/flutter_webrtc.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:uuid/uuid.dart';
+
 import '../../domain/usecases/create_room.dart';
-import '../../domain/usecases/join_room.dart';
 import '../../domain/usecases/get_ice_servers.dart';
+import '../../domain/usecases/get_room.dart';
+import '../../domain/usecases/join_room.dart';
 
 part 'meeting_state.dart';
 
 class MeetingCubit extends Cubit<MeetingState> {
   final CreateRoom createRoomUseCase;
   final JoinRoom joinRoom;
+  final GetRoom getRoom;
   final GetIceServers getIceServers;
   final WebRTCService webrtcService;
   final WebSocketService websocketService;
@@ -41,6 +44,7 @@ class MeetingCubit extends Cubit<MeetingState> {
     required this.webrtcService,
     required this.websocketService,
     required this.sharedPreferences,
+    required this.getRoom,
   }) : super(MeetingInitial());
 
   Future<void> createRoom() async {
@@ -59,10 +63,27 @@ class MeetingCubit extends Cubit<MeetingState> {
       (room) => emit(
         MeetingRoomCreated(
           roomId: room.id,
-          joinUrl: room.joinUrl ?? 'https://bincang-visual.com/room/${room.id}',
+          joinUrl:
+              room.joinUrl ?? 'https://bincang-visual.cloud/room/${room.id}',
         ),
       ),
     );
+  }
+
+  Future<void> validateRoom({
+    required String roomId,
+  }) async {
+    try {
+      emit(const MeetingLoading(message: 'Joining meeting...'));
+
+      final roomResult = await joinRoom(JoinRoomParams(roomId: roomId));
+
+      roomResult.fold(
+        (failure) => throw Exception(failure.message), (room) => emit(RoomValidated(room: room)),
+      );
+    } catch (e) {
+      emit(MeetingError('Failed to join meeting: ${e.toString()}'));
+    }
   }
 
   Future<void> joinMeeting({
@@ -318,6 +339,7 @@ class MeetingCubit extends Cubit<MeetingState> {
       }
     }
 
+    /*
     if (isRenegotiate) {
       final state = this.state;
       if (state is MeetingJoined) {
@@ -330,11 +352,10 @@ class MeetingCubit extends Cubit<MeetingState> {
             tag: 'MeetingCubit',
             message: 'Peer $peerId was sharing, waiting for track removal...',
           );
-          // Give time for onRemoveTrack to fire (happens during setRemoteDescription)
-          // We'll set remote description first, then check if screen share was removed
+
         }
       }
-    }
+    }*/
 
     await webrtcService.establishedPeerConnection(peerId, config);
 
@@ -345,8 +366,8 @@ class MeetingCubit extends Cubit<MeetingState> {
       RTCSessionDescription(sdp, type),
     );
 
+    /*
     if (isRenegotiate) {
-      // wait for onRemoveTrack to fire
       await Future.delayed(const Duration(milliseconds: 300));
 
       final state = this.state;
@@ -374,6 +395,7 @@ class MeetingCubit extends Cubit<MeetingState> {
         }
       }
     }
+    */
 
     final answer = await webrtcService.createAnswer(peerId);
 
@@ -463,11 +485,6 @@ class MeetingCubit extends Cubit<MeetingState> {
           participants: updatedParticipants,
         ),
       );
-
-      // final updatedParticipants = state.participants
-      //     .where((p) => p.id != peerId)
-      //     .toList();
-      // emit(state.copyWith(participants: updatedParticipants));
     }
   }
 
@@ -479,7 +496,6 @@ class MeetingCubit extends Cubit<MeetingState> {
       id: const Uuid().v4(),
       roomId: state.roomId,
       userId: message.from,
-      // userId from
       userName: message.data!['userName'] as String? ?? 'Unknown',
       message: message.data!['message'] as String,
       timestamp: message.timestamp,
@@ -498,7 +514,6 @@ class MeetingCubit extends Cubit<MeetingState> {
     final isMuted = message.data!['isMuted'] as bool?;
     final isVideoOff = message.data!['isVideoOff'] as bool?;
 
-    // Update participant state
     final updatedParticipants =
         state.participants.map((p) {
           if (p.userId == peerId) {
@@ -569,16 +584,6 @@ class MeetingCubit extends Cubit<MeetingState> {
 
     final newMuteState = !state.isMuted;
 
-    printDebugLog(
-      tag: 'MeetingCubit',
-      message: '🎤 Toggling mute: $newMuteState',
-    );
-    printDebugLog(
-      tag: 'MeetingCubit',
-      message:
-          'Current streams: camera=${webrtcService.remoteStreamMap.length}, screen=${webrtcService.currentScreenShares.length}',
-    );
-
     await webrtcService.toggleAudio(newMuteState);
 
     emit(state.copyWith(isMuted: newMuteState));
@@ -592,11 +597,6 @@ class MeetingCubit extends Cubit<MeetingState> {
         timestamp: DateTime.now(),
       ),
     );
-    printDebugLog(
-      tag: 'MeetingCubit',
-      message:
-          '✅ Mute toggled, streams: camera=${webrtcService.remoteStreamMap.length}, screen=${webrtcService.currentScreenShares.length}',
-    );
   }
 
   Future<void> toggleVideo() async {
@@ -604,15 +604,6 @@ class MeetingCubit extends Cubit<MeetingState> {
     if (state is! MeetingJoined) return;
 
     final newVideoState = !state.isVideoOff;
-    printDebugLog(
-      tag: 'MeetingCubit',
-      message: '📹 Toggling video: $newVideoState',
-    );
-    printDebugLog(
-      tag: 'MeetingCubit',
-      message:
-          'Current streams: camera=${webrtcService.remoteStreamMap.length}, screen=${webrtcService.currentScreenShares.length}',
-    );
 
     await webrtcService.toggleVideo(newVideoState);
 
@@ -626,12 +617,6 @@ class MeetingCubit extends Cubit<MeetingState> {
         data: {'isVideoOff': newVideoState},
         timestamp: DateTime.now(),
       ),
-    );
-
-    printDebugLog(
-      tag: 'MeetingCubit',
-      message:
-          '✅ Video toggled, streams: camera=${webrtcService.remoteStreamMap.length}, screen=${webrtcService.currentScreenShares.length}',
     );
   }
 
