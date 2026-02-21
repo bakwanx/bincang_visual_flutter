@@ -1,41 +1,26 @@
 import 'package:bincang_visual_flutter/di/dependency_injection.dart';
-import 'package:bincang_visual_flutter/src/presentation/cubit/remote_cubit.dart';
-import 'package:bincang_visual_flutter/src/presentation/dashboard_page.dart';
-import 'package:bincang_visual_flutter/src/presentation/preview_page.dart';
+import 'package:bincang_visual_flutter/utils/log/print_debug_log.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter/services.dart';
+import 'app.dart';
 
-
-Future<void> main() async {
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  initDependency();
-  // await Firebase.initializeApp();
-  runApp(MyApp());
+  await SystemChrome.setPreferredOrientations([
+    DeviceOrientation.portraitUp,
+    DeviceOrientation.portraitDown,
+    DeviceOrientation.landscapeLeft,
+    DeviceOrientation.landscapeRight,
+  ]);
+  await initDependency();
+  // await Hive.init(path);
+  FlutterError.onError = (FlutterErrorDetails details) {
+    FlutterError.presentError(details);
+    printDebugLog(tag: 'Flutter Error', message: '${details.exception}');
+    printDebugLog(tag: 'Stack trace', message: '${details.stack}');
+  };
+
+  runApp(const BincangVisualApp());
 }
-
-class MyApp extends StatelessWidget {
-
-  @override
-  Widget build(BuildContext context) {
-    // "L3F-awjn-iSo"
-    return MultiBlocProvider(
-      providers: [
-        BlocProvider(
-          create: (context) => di<RemoteCubit>(),
-        ),
-      ],
-      child: MaterialApp(
-        title: 'Flutter Demo',
-        debugShowCheckedModeBanner: false,
-        theme: ThemeData(
-          primarySwatch: Colors.blue,
-          scaffoldBackgroundColor: Color(0XFFFCFCFF),
-        ),
-        home: DashboardPage(),
-      ),
-    );
-  }
-}
-
 
 

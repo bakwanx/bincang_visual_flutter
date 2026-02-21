@@ -3,11 +3,12 @@ plugins {
     id("kotlin-android")
     // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
     id("dev.flutter.flutter-gradle-plugin")
+//    id("com.google.gms.google-services")
 }
 
 android {
-    namespace = "com.example.bincang_visual_flutter"
-    compileSdk = 35
+    namespace = "com.bincang_visual_flutter.id"
+    compileSdk = 36
     ndkVersion = flutter.ndkVersion
 
     compileOptions {
@@ -21,11 +22,11 @@ android {
 
     defaultConfig {
         // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
-        applicationId = "com.example.bincang_visual_flutter"
+        applicationId = "com.bincang_visual_flutter.id"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
         minSdk = 24
-        targetSdk = 35
+        targetSdk = 36
         versionCode = flutter.versionCode
         versionName = flutter.versionName
     }
@@ -37,6 +38,12 @@ android {
             signingConfig = signingConfigs.getByName("debug")
         }
     }
+}
+
+dependencies {
+    implementation("androidx.core:core:1.17.0")
+//    implementation(platform("com.google.firebase:firebase-bom:34.9.0"))
+//    implementation("com.google.firebase:firebase-analytics")
 }
 
 flutter {
