@@ -126,11 +126,13 @@ class MeetingRemoteDataSourceImpl implements MeetingRemoteDataSource {
         final iceServersData = data['iceServers'] as List;
 
         final iceServers = iceServersData.map((server) {
-          String username = server['username'];
-          String credential = server['credential'];
+          String? username = server['username'];
+          String? credential = server['credential'];
           if(!kDebugMode) {
-            username = EncryptUtil.decryptData(username);
-            credential = EncryptUtil.decryptData(credential);
+            if(username != null && credential != null) {
+              username = EncryptUtil.decryptData(username);
+              credential = EncryptUtil.decryptData(credential);
+            }
           }
           return IceServer(
             urls: List<String>.from(server['urls']),

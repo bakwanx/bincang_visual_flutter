@@ -41,7 +41,6 @@ class WebRTCService {
   Map<String, MediaStream> get currentScreenShares =>
       Map.unmodifiable(_screenShareStreams);
 
-
   bool _isDisposed = false;
   String? _localUserId;
   VoidCallback? onBrowserStopShare;
@@ -58,23 +57,21 @@ class WebRTCService {
 
     try {
       final Map<String, dynamic> mediaConstraints = {
-        'audio':
-            audio
-                ? {
-                  'echoCancellation': true,
-                  'noiseSuppression': true,
-                  'autoGainControl': true,
-                }
-                : false,
-        'video':
-            video
-                ? {
-                  'facingMode': 'user',
-                  'width': {'ideal': 1280, 'max': 1920},
-                  'height': {'ideal': 720, 'max': 1080},
-                  'frameRate': {'ideal': 30, 'max': 60},
-                }
-                : false,
+        'audio': audio
+            ? {
+                'echoCancellation': true,
+                'noiseSuppression': true,
+                'autoGainControl': true,
+              }
+            : false,
+        'video': video
+            ? {
+                'facingMode': 'user',
+                'width': {'ideal': 1280, 'max': 1920},
+                'height': {'ideal': 720, 'max': 1080},
+                'frameRate': {'ideal': 30, 'max': 60},
+              }
+            : false,
       };
 
       _localStream = await navigator.mediaDevices.getUserMedia(
@@ -100,18 +97,18 @@ class WebRTCService {
       return _peerConnections[peerId]!;
     }
 
-
     try {
       final Map<String, dynamic> configuration = {
-        'iceServers':
-            config.iceServers.map((server) {
-              final serverConfig = <String, dynamic>{'urls': server.urls};
-              if (server.username != null)
-                serverConfig['username'] = server.username;
-              if (server.credential != null)
-                serverConfig['credential'] = server.credential;
-              return serverConfig;
-            }).toList(),
+        'iceServers': config.iceServers.map((server) {
+          final serverConfig = <String, dynamic>{'urls': server.urls};
+          if (server.username != null) {
+            serverConfig['username'] = server.username;
+          }
+          if (server.credential != null) {
+            serverConfig['credential'] = server.credential;
+          }
+          return serverConfig;
+        }).toList(),
         'sdpSemantics': 'unified-plan',
         'iceTransportPolicy': 'all',
         'bundlePolicy': 'max-bundle',
@@ -183,7 +180,6 @@ class WebRTCService {
             _screenShareStreamController.add(Map.from(_screenShareStreams));
             continue;
           }
-
 
           printDebugLog(tag: '$peerId', message: 'New stream: $streamId');
 
@@ -349,21 +345,22 @@ class WebRTCService {
     }
 
     try {
-      if(Platform.isAndroid) {
+      if (Platform.isAndroid) {
         await MediaProjectionService.start();
-        _screenStream = await navigator.mediaDevices.getDisplayMedia({ 'video': { 'width': {'ideal': 1280}, // Lower than desktop
-          'height': {'ideal': 720},
-          'frameRate': {'ideal': 15}, // Lower frame rate
-          }, 'audio': false, });
+        _screenStream = await navigator.mediaDevices.getDisplayMedia({
+          'video': {
+            'width': {'ideal': 1280}, // Lower than desktop
+            'height': {'ideal': 720},
+            'frameRate': {'ideal': 15}, // Lower frame rate
+          },
+          'audio': false,
+        });
       } else {
         _screenStream = await navigator.mediaDevices.getDisplayMedia({
           'video': {'cursor': 'always'},
           'audio': false,
         });
       }
-
-
-
 
       printDebugLog(
         tag: 'WebRTC',
@@ -399,7 +396,10 @@ class WebRTCService {
       if (_localUserId != null) {
         _screenShareStreams[_localUserId!] = _screenStream!;
         _screenShareStreamController.add(Map.from(_screenShareStreams));
-        printDebugLog(tag: 'WebRTC', message: 'Added LOCAL screen share to own view');
+        printDebugLog(
+          tag: 'WebRTC',
+          message: 'Added LOCAL screen share to own view',
+        );
       }
 
       screenTrack.onEnded = () async {
@@ -416,7 +416,6 @@ class WebRTCService {
 
   Future<Map<String, RTCSessionDescription>> stopScreenShare() async {
     if (_screenStream == null) return {};
-
 
     _screenStream!.getTracks().forEach((track) {
       track.stop();
@@ -559,7 +558,10 @@ class WebRTCService {
   void removeScreenShareStream(String peerId) {
     if (_screenShareStreams.remove(peerId) != null) {
       _screenShareStreamController.add(Map.from(_screenShareStreams));
-      printDebugLog(tag: 'WebRTC', message: 'Manually removed screen share for $peerId');
+      printDebugLog(
+        tag: 'WebRTC',
+        message: 'Manually removed screen share for $peerId',
+      );
     }
   }
 
