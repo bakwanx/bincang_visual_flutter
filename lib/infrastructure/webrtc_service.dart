@@ -1,8 +1,9 @@
 import 'dart:async';
-import 'dart:io';
-import 'dart:ui';
+
 import 'package:bincang_visual_flutter/features/meeting/domain/entities/meeting_entities.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_webrtc/flutter_webrtc.dart';
+
 import '../../../../core/error/exceptions.dart';
 import '../utils/log/print_debug_log.dart';
 import '../utils/media/media_projection_service.dart';
@@ -345,7 +346,7 @@ class WebRTCService {
     }
 
     try {
-      if (Platform.isAndroid) {
+      if (!kIsWeb) {
         await MediaProjectionService.start();
         _screenStream = await navigator.mediaDevices.getDisplayMedia({
           'video': {
