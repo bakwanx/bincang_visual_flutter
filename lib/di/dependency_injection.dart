@@ -30,7 +30,6 @@ import '../features/meeting/data/datasources/meeting_remote_datasource.dart';
 import '../features/meeting/data/repositories/meeting_repository_impl.dart';
 import '../features/meeting/domain/repositories/meeting_repository.dart';
 import '../features/meeting/domain/usecases/create_room.dart';
-import '../features/meeting/domain/usecases/join_room.dart';
 import '../features/meeting/presentation/cubit/meeting_cubit.dart';
 import '../infrastructure/webrtc_service.dart';
 
@@ -58,7 +57,6 @@ Future<void> initDependency() async {
   di.registerFactory(
     () => MeetingCubit(
       createRoomUseCase: di(),
-      joinRoom: di(),
       webrtcService: di(),
       websocketService: di(),
       getIceServers: di(),
@@ -81,7 +79,6 @@ Future<void> initDependency() async {
 
   // Use cases
   di.registerLazySingleton(() => CreateRoom(di()));
-  di.registerLazySingleton(() => JoinRoom(di()));
   di.registerLazySingleton(() => GetIceServers(di()));
   di.registerLazySingleton(() => GetUserAnalytics(di()));
   di.registerLazySingleton(() => GetCurrentUser(di()));

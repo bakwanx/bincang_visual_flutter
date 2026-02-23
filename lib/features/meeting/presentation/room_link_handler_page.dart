@@ -82,8 +82,8 @@ class _RoomLinkHandlerPageState extends State<RoomLinkHandlerPage> {
             actions: [
               TextButton(
                 onPressed: () {
-                  Navigator.of(context).pop(); // Close dialog
-                  Navigator.of(context).pop(); // Go back to home
+                  Navigator.of(context).pop();
+                  Navigator.of(context).pop();
                 },
                 child: const Text('OK'),
               ),

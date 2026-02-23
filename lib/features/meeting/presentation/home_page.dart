@@ -33,11 +33,15 @@ class _HomePageState extends State<HomePage> {
     return BlocListener<MeetingCubit, MeetingState>(
       listener: (context, state) {
         if (state is MeetingRoomCreated) {
-          context.go('/preview', extra: {
-            'roomId': state.roomId,
-            'isNewMeeting': true,
-          });
-
+          context.push(
+            '/preview',
+            extra: {'roomId': state.roomId, 'isNewMeeting': true},
+          );
+        } else if (state is RoomValidated) {
+          context.push(
+            '/preview',
+            extra: {'roomId': state.room.id, 'isNewMeeting': true},
+          );
         } else if (state is MeetingError) {
           setState(() => _isCreating = false);
           ScaffoldMessenger.of(context).showSnackBar(
@@ -223,21 +227,16 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
-  void _joinMeeting() {
+  Future<void> _joinMeeting() async {
     if (_formKey.currentState!.validate()) {
       final input = _meetingCodeController.text.trim();
       final roomId = _extractRoomId(input);
-
-      context.go('/preview', extra: {
-        'roomId': roomId,
-        'isNewMeeting': true,
-      });
+      await context.read<MeetingCubit>().validateRoom(roomId: roomId);
     }
   }
 
   Future<void> _createNewMeeting() async {
     setState(() => _isCreating = true);
-
     context.read<MeetingCubit>().createRoom();
   }
 

@@ -23,3 +23,7 @@ class NetworkFailure extends Failure {
 class WebRTCFailure extends Failure {
   const WebRTCFailure(String message) : super(message);
 }
+
+class UnRecognizedFailure extends Failure {
+  const UnRecognizedFailure(String message) : super(message);
+}

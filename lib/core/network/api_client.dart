@@ -91,7 +91,7 @@ class ApiClient {
       case DioErrorType.cancel:
         return ServerException('Request cancelled');
       default:
-        return NetworkException('Network error');
+        return NetworkException('Network error: Please check you connectivity');
     }
   }
 

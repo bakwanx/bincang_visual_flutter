@@ -17,10 +17,15 @@ abstract class MeetingRemoteDataSource {
   });
 
   Future<RoomModel> getRoom(String roomId);
+
   Future<List<ParticipantModel>> getParticipants(String roomId);
+
   Future<List<ChatMessageModel>> getChatHistory(String roomId);
+
   Future<RoomConfig> getIceServers();
+
   Future<Recording> startRecording(String roomId);
+
   Future<void> stopRecording(String roomId, String recordingId);
 }
 
@@ -41,13 +46,14 @@ class MeetingRemoteDataSourceImpl implements MeetingRemoteDataSource {
         data: {
           'name': name,
           'maxParticipants': maxParticipants,
-          'settings': RoomSettingsModel(
-            allowScreenShare: settings.allowScreenShare,
-            allowChat: settings.allowChat,
-            waitingRoom: settings.waitingRoom,
-            recordingEnabled: settings.recordingEnabled,
-            maxDuration: settings.maxDuration,
-          ).toJson(),
+          'settings':
+              RoomSettingsModel(
+                allowScreenShare: settings.allowScreenShare,
+                allowChat: settings.allowChat,
+                waitingRoom: settings.waitingRoom,
+                recordingEnabled: settings.recordingEnabled,
+                maxDuration: settings.maxDuration,
+              ).toJson(),
         },
       );
 
@@ -55,10 +61,14 @@ class MeetingRemoteDataSourceImpl implements MeetingRemoteDataSource {
         final roomId = response.data['roomId'] as String;
         return await getRoom(roomId);
       } else {
+        final message = response.data['error'];
+        if (message != null) {
+          throw ServerException('$message');
+        }
         throw ServerException('Failed to create room');
       }
     } catch (e) {
-      throw ServerException(e.toString());
+      rethrow;
     }
   }
 
@@ -70,10 +80,14 @@ class MeetingRemoteDataSourceImpl implements MeetingRemoteDataSource {
       if (response.statusCode == 200) {
         return RoomModel.fromJson(response.data as Map<String, dynamic>);
       } else {
+        final message = response.data['error'];
+        if (message != null) {
+          throw ServerException('$message');
+        }
         throw ServerException('Failed to get room');
       }
     } catch (e) {
-      throw ServerException(e.toString());
+      rethrow;
     }
   }
 
@@ -85,13 +99,19 @@ class MeetingRemoteDataSourceImpl implements MeetingRemoteDataSource {
       if (response.statusCode == 200) {
         final List<dynamic> data = response.data as List;
         return data
-            .map((json) => ParticipantModel.fromJson(json as Map<String, dynamic>))
+            .map(
+              (json) => ParticipantModel.fromJson(json as Map<String, dynamic>),
+            )
             .toList();
       } else {
+        final message = response.data['error'];
+        if (message != null) {
+          throw ServerException('$message');
+        }
         throw ServerException('Failed to get participants');
       }
     } catch (e) {
-      throw ServerException(e.toString());
+      rethrow;
     }
   }
 
@@ -106,13 +126,19 @@ class MeetingRemoteDataSourceImpl implements MeetingRemoteDataSource {
       if (response.statusCode == 200) {
         final List<dynamic> data = response.data as List;
         return data
-            .map((json) => ChatMessageModel.fromJson(json as Map<String, dynamic>))
+            .map(
+              (json) => ChatMessageModel.fromJson(json as Map<String, dynamic>),
+            )
             .toList();
       } else {
+        final message = response.data['error'];
+        if (message != null) {
+          throw ServerException('$message');
+        }
         throw ServerException('Failed to get chat history');
       }
     } catch (e) {
-      throw ServerException(e.toString());
+      rethrow;
     }
   }
 
@@ -125,21 +151,22 @@ class MeetingRemoteDataSourceImpl implements MeetingRemoteDataSource {
         final data = response.data as Map<String, dynamic>;
         final iceServersData = data['iceServers'] as List;
 
-        final iceServers = iceServersData.map((server) {
-          String? username = server['username'];
-          String? credential = server['credential'];
-          if(!kDebugMode) {
-            if(username != null && credential != null) {
-              username = EncryptUtil.decryptData(username);
-              credential = EncryptUtil.decryptData(credential);
-            }
-          }
-          return IceServer(
-            urls: List<String>.from(server['urls']),
-            username: username,
-            credential: credential,
-          );
-        }).toList();
+        final iceServers =
+            iceServersData.map((server) {
+              String? username = server['username'];
+              String? credential = server['credential'];
+              if (!kDebugMode) {
+                if (username != null && credential != null) {
+                  username = EncryptUtil.decryptData(username);
+                  credential = EncryptUtil.decryptData(credential);
+                }
+              }
+              return IceServer(
+                urls: List<String>.from(server['urls']),
+                username: username,
+                credential: credential,
+              );
+            }).toList();
 
         return RoomConfig(
           iceServers: iceServers,
@@ -147,10 +174,14 @@ class MeetingRemoteDataSourceImpl implements MeetingRemoteDataSource {
           codecPreferences: List<String>.from(data['codecPreferences'] ?? []),
         );
       } else {
+        final message = response.data['error'];
+        if (message != null) {
+          throw ServerException('$message');
+        }
         throw ServerException('Failed to get ICE servers');
       }
     } catch (e) {
-      throw ServerException(e.toString());
+      rethrow;
     }
   }
 
@@ -171,10 +202,14 @@ class MeetingRemoteDataSourceImpl implements MeetingRemoteDataSource {
           status: RecordingStatus.recording,
         );
       } else {
+        final message = response.data['error'];
+        if (message != null) {
+          throw ServerException('$message');
+        }
         throw ServerException('Failed to start recording');
       }
     } catch (e) {
-      throw ServerException(e.toString());
+      rethrow;
     }
   }
 
@@ -183,17 +218,19 @@ class MeetingRemoteDataSourceImpl implements MeetingRemoteDataSource {
     try {
       final response = await apiClient.post(
         ApiConstants.stopRecording,
-        data: {
-          'roomId': roomId,
-          'recordingId': recordingId,
-        },
+        data: {'roomId': roomId, 'recordingId': recordingId},
       );
 
       if (response.statusCode != 200) {
         throw ServerException('Failed to stop recording');
+      } else {
+        final message = response.data['error'];
+        if (message != null) {
+          throw ServerException('$message');
+        }
       }
     } catch (e) {
-      throw ServerException(e.toString());
+      rethrow;
     }
   }
 }

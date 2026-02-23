@@ -10,17 +10,14 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_webrtc/flutter_webrtc.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:uuid/uuid.dart';
-
 import '../../domain/usecases/create_room.dart';
 import '../../domain/usecases/get_ice_servers.dart';
 import '../../domain/usecases/get_room.dart';
-import '../../domain/usecases/join_room.dart';
 
 part 'meeting_state.dart';
 
 class MeetingCubit extends Cubit<MeetingState> {
   final CreateRoom createRoomUseCase;
-  final JoinRoom joinRoom;
   final GetRoom getRoom;
   final GetIceServers getIceServers;
   final WebRTCService webrtcService;
@@ -39,7 +36,6 @@ class MeetingCubit extends Cubit<MeetingState> {
 
   MeetingCubit({
     required this.createRoomUseCase,
-    required this.joinRoom,
     required this.getIceServers,
     required this.webrtcService,
     required this.websocketService,
@@ -73,17 +69,13 @@ class MeetingCubit extends Cubit<MeetingState> {
   Future<void> validateRoom({
     required String roomId,
   }) async {
-    try {
-      emit(const MeetingLoading(message: 'Joining meeting...'));
+    emit(const MeetingLoading(message: 'Joining meeting...'));
 
-      final roomResult = await joinRoom(JoinRoomParams(roomId: roomId));
+    final roomResult = await getRoom(GetRoomParams(roomId: roomId));
 
-      roomResult.fold(
-        (failure) => throw Exception(failure.message), (room) => emit(RoomValidated(room: room)),
-      );
-    } catch (e) {
-      emit(MeetingError('Failed to join meeting: ${e.toString()}'));
-    }
+    roomResult.fold(
+          (failure) => emit(MeetingError(failure.message)), (room) => emit(RoomValidated(room: room)),
+    );
   }
 
   Future<void> joinMeeting({
@@ -93,7 +85,7 @@ class MeetingCubit extends Cubit<MeetingState> {
     try {
       emit(const MeetingLoading(message: 'Joining meeting...'));
 
-      final roomResult = await joinRoom(JoinRoomParams(roomId: roomId));
+      final roomResult = await getRoom(GetRoomParams(roomId: roomId));
       Room? roomInfo;
 
       roomResult.fold(

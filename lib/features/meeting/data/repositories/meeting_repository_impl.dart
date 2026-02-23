@@ -1,5 +1,6 @@
 import 'package:bincang_visual_flutter/features/meeting/domain/entities/meeting_entities.dart';
 import 'package:bincang_visual_flutter/features/meeting/domain/repositories/meeting_repository.dart';
+import 'package:bincang_visual_flutter/utils/api_try_catch.dart';
 import 'package:either_dart/either.dart';
 
 import '../../../../core/error/exceptions.dart';
@@ -22,86 +23,54 @@ class MeetingRepositoryImpl implements MeetingRepository {
     required int maxParticipants,
     required RoomSettings settings,
   }) async {
-    if (await networkInfo.isConnected) {
-      try {
+    return apiTryCatch(
+      execute: () async {
         final room = await remoteDataSource.createRoom(
           name: name,
           maxParticipants: maxParticipants,
           settings: settings,
         );
         return Right(room);
-      } on ServerException catch (e) {
-        return Left(ServerFailure(e.message));
-      } catch (e) {
-        return Left(ServerFailure(e.toString()));
-      }
-    } else {
-      return const Left(NetworkFailure('No internet connection'));
-    }
+      },
+    );
   }
 
   @override
   Future<Either<Failure, Room>> getRoom(String roomId) async {
-    if (await networkInfo.isConnected) {
-      try {
+    return apiTryCatch(
+      execute: () async {
         final room = await remoteDataSource.getRoom(roomId);
         return Right(room);
-      } on ServerException catch (e) {
-        return Left(ServerFailure(e.message));
-      } catch (e) {
-        return Left(ServerFailure(e.toString()));
-      }
-    } else {
-      return const Left(NetworkFailure('No internet connection'));
-    }
+      },
+    );
   }
 
   @override
-  Future<Either<Failure, List<Participant>>> getParticipants(String roomId) async {
-    if (await networkInfo.isConnected) {
-      try {
-        final participants = await remoteDataSource.getParticipants(roomId);
-        return Right(participants);
-      } on ServerException catch (e) {
-        return Left(ServerFailure(e.message));
-      } catch (e) {
-        return Left(ServerFailure(e.toString()));
-      }
-    } else {
-      return const Left(NetworkFailure('No internet connection'));
-    }
+  Future<Either<Failure, List<Participant>>> getParticipants(
+    String roomId,
+  ) async {
+    return apiTryCatch(execute: () async {
+      final participants = await remoteDataSource.getParticipants(roomId);
+      return Right(participants);
+    });
   }
 
   @override
-  Future<Either<Failure, List<ChatMessage>>> getChatHistory(String roomId) async {
-    if (await networkInfo.isConnected) {
-      try {
-        final messages = await remoteDataSource.getChatHistory(roomId);
-        return Right(messages);
-      } on ServerException catch (e) {
-        return Left(ServerFailure(e.message));
-      } catch (e) {
-        return Left(ServerFailure(e.toString()));
-      }
-    } else {
-      return const Left(NetworkFailure('No internet connection'));
-    }
+  Future<Either<Failure, List<ChatMessage>>> getChatHistory(
+    String roomId,
+  ) async {
+   return apiTryCatch(execute: () async {
+     final messages = await remoteDataSource.getChatHistory(roomId);
+     return Right(messages);
+   });
   }
 
   @override
   Future<Either<Failure, Recording>> startRecording(String roomId) async {
-    if (await networkInfo.isConnected) {
-      try {
-        final recording = await remoteDataSource.startRecording(roomId);
-        return Right(recording);
-      } on ServerException catch (e) {
-        return Left(ServerFailure(e.message));
-      } catch (e) {
-        return Left(ServerFailure(e.toString()));
-      }
-    } else {
-      return const Left(NetworkFailure('No internet connection'));
-    }
+    return apiTryCatch(execute: () async {
+      final recording = await remoteDataSource.startRecording(roomId);
+      return Right(recording);
+    });
   }
 
   @override
@@ -109,33 +78,17 @@ class MeetingRepositoryImpl implements MeetingRepository {
     required String roomId,
     required String recordingId,
   }) async {
-    if (await networkInfo.isConnected) {
-      try {
-        await remoteDataSource.stopRecording(roomId, recordingId);
-        return const Right(null);
-      } on ServerException catch (e) {
-        return Left(ServerFailure(e.message));
-      } catch (e) {
-        return Left(ServerFailure(e.toString()));
-      }
-    } else {
-      return const Left(NetworkFailure('No internet connection'));
-    }
+    return apiTryCatch(execute: () async {
+      await remoteDataSource.stopRecording(roomId, recordingId);
+      return const Right(null);
+    });
   }
 
   @override
   Future<Either<Failure, RoomConfig>> getIceServers() async {
-    if (await networkInfo.isConnected) {
-      try {
-        final config = await remoteDataSource.getIceServers();
-        return Right(config);
-      } on ServerException catch (e) {
-        return Left(ServerFailure(e.message));
-      } catch (e) {
-        return Left(ServerFailure(e.toString()));
-      }
-    } else {
-      return const Left(NetworkFailure('No internet connection'));
-    }
+    return apiTryCatch(execute: () async {
+      final config = await remoteDataSource.getIceServers();
+      return Right(config);
+    });
   }
 }

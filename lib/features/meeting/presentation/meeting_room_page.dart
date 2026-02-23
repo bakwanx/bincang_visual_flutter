@@ -81,6 +81,7 @@ class _MeetingRoomPageState extends State<MeetingRoomPage> {
                   backgroundColor: Colors.red,
                 ),
               );
+              context.go('/');
             } else if (state is MeetingEnded) {
               context.go('/');
             }
