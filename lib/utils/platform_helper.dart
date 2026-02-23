@@ -1,11 +1,11 @@
 import 'package:flutter/foundation.dart' show kIsWeb;
-import 'dart:html' as html show window;
+import 'package:web/web.dart' as web;
 
 class PlatformHelper {
   static bool get isMobileWeb {
     if (!kIsWeb) return false;
 
-    final userAgent = html.window.navigator.userAgent.toLowerCase();
+    final userAgent = web.window.navigator.userAgent.toLowerCase();
     return userAgent.contains('mobile') ||
         userAgent.contains('android') ||
         userAgent.contains('iphone') ||

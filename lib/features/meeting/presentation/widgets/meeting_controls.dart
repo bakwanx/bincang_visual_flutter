@@ -60,9 +60,9 @@ class MeetingControls extends StatelessWidget {
               tooltip: isVideoOff ? 'Start Video' : 'Stop Video',
             ),
 
-            const SizedBox(width: 12),
-
             if (canScreenShare) ...[
+              const SizedBox(width: 12),
+
               _buildControlButton(
                 icon:
                     isScreenSharing

@@ -30,7 +30,6 @@ String _getBaseWSURL(final AppMode appMode) {
   }
 }
 
-
 class ApiConstants {
   static AppMode appMode = kDebugMode ? AppMode.dev : AppMode.prod;
 
