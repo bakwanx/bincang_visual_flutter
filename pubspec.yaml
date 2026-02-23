@@ -1,5 +1,5 @@
 name: bincang_visual_flutter
-description: "A new Flutter project."
+description: "Create meeting within seconds—no cost, no fees, and no login required. Simply create a new meeting, and you’re ready to go!"
 # The following line prevents the package from being accidentally published to
 # pub.dev using `flutter pub publish`. This is preferred for private packages.
 publish_to: 'none' # Remove this line if you wish to publish to pub.dev
