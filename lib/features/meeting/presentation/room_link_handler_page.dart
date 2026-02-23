@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 import 'cubit/meeting_cubit.dart';
 import 'meeting_preview_page.dart';
 
@@ -83,7 +84,7 @@ class _RoomLinkHandlerPageState extends State<RoomLinkHandlerPage> {
               TextButton(
                 onPressed: () {
                   Navigator.of(context).pop();
-                  Navigator.of(context).pop();
+                  context.go('/');
                 },
                 child: const Text('OK'),
               ),
