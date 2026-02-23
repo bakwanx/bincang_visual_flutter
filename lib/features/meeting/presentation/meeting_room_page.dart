@@ -164,12 +164,6 @@ class _MeetingRoomPageState extends State<MeetingRoomPage> {
                   context.read<MeetingCubit>().stopScreenShare();
                 } else {
                   context.read<MeetingCubit>().startScreenShare();
-                  // return;
-                  // if (kIsWeb) {
-                  //   context.read<MeetingCubit>().startScreenShare();
-                  // } else {
-                  //   _showScreenShareNotSupported();
-                  // }
                 }
               },
               onToggleChat: () => setState(() => _showChat = !_showChat),

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../../../utils/platform_helper.dart';
+
 class MeetingControls extends StatelessWidget {
   final bool isMuted;
   final bool isVideoOff;
@@ -30,6 +32,7 @@ class MeetingControls extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final canScreenShare = PlatformHelper.supportsScreenShare;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
       decoration: BoxDecoration(
@@ -59,23 +62,30 @@ class MeetingControls extends StatelessWidget {
 
             const SizedBox(width: 12),
 
-            _buildControlButton(
-              icon: isScreenSharing ? Icons.stop_screen_share : Icons.screen_share,
-              color: isScreenSharing
-                  ? Colors.green
-                  : someoneElseIsSharing
-                  ? Colors.grey
-                  : Colors.white,
-              onPressed: someoneElseIsSharing && !isScreenSharing
-                  ? null
-                  : onToggleScreenShare,
-              tooltip: someoneElseIsSharing && !isScreenSharing
-                  ? 'Someone else is sharing'
-                  : isScreenSharing
-                  ? 'Stop Sharing'
-                  : 'Share Screen',
-            ),
-
+            if (canScreenShare) ...[
+              _buildControlButton(
+                icon:
+                    isScreenSharing
+                        ? Icons.stop_screen_share
+                        : Icons.screen_share,
+                color:
+                    isScreenSharing
+                        ? Colors.green
+                        : someoneElseIsSharing
+                        ? Colors.grey
+                        : Colors.white,
+                onPressed:
+                    someoneElseIsSharing && !isScreenSharing
+                        ? null
+                        : onToggleScreenShare,
+                tooltip:
+                    someoneElseIsSharing && !isScreenSharing
+                        ? 'Someone else is sharing'
+                        : isScreenSharing
+                        ? 'Stop Sharing'
+                        : 'Share Screen',
+              ),
+            ],
 
             const SizedBox(width: 12),
 
